@@ -3,23 +3,18 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Team",
   description:
-    "Meet the VeloxDAG core team including Joseph Chen, Lead Protocol Engineer with 5+ years Web3 and mainnet experience.",
+    "Meet the VeloxDAG core team including Sam Kan, Lead Protocol Engineer with 5+ years Web3 and mainnet experience.",
 };
 
 const team = [
   {
-    name: "Joseph Chen",
+    name: "Sam Kan",
     role: "Lead Protocol & Security Engineer",
-    bio: `Joseph is an independent Web3 developer with 5+ years building production software and five shipped mainnet projects. He specializes in Solidity smart contracts, DeFi protocol design, and security-first engineering with Foundry fuzz testing and Slither analysis.
+    bio: `Sam is an independent Web3 developer with 5+ years building production software and five shipped mainnet projects. He specializes in Solidity smart contracts, DeFi protocol design, and security-first engineering with Foundry fuzz testing and Slither analysis.
 
-At VeloxDAG, Joseph leads protocol security review, RPC hardening, mining infrastructure, and the WASM smart contract roadmap. His work includes SecureFlow (AI-powered contract security scanning), MeowCoin (ERC-20 reference), CatnipFarm (Synthetix-style staking), PawClaim (Merkle airdrops), and CatVesting (linear vesting).
+At VeloxDAG, Sam leads protocol security review, RPC hardening, mining infrastructure, and the WASM smart contract roadmap. His work includes SecureFlow (AI-powered contract security scanning), MeowCoin (ERC-20 reference), CatnipFarm (Synthetix-style staking), PawClaim (Merkle airdrops), and CatVesting (linear vesting).
 
-Joseph believes fair-launch PoW is the antidote to VC-captured tokenomics — and ships code accordingly.`,
-    links: [
-      { label: "Website", href: "http://josephchendev.com/" },
-      { label: "GitHub", href: "https://github.com/SelfLearnedDev2027" },
-      { label: "Email", href: "mailto:Josephbbob@proton.me" },
-    ],
+Sam believes fair-launch PoW is the antidote to VC-captured tokenomics — and ships code accordingly.`,
     tags: ["Solidity", "Foundry", "BlockDAG", "Security", "DeFi"],
   },
 ];
@@ -56,25 +51,14 @@ export default function TeamPage() {
               </div>
             </div>
             <p className="mt-6 text-slate-300 leading-relaxed whitespace-pre-line">{member.bio}</p>
-            <div className="mt-6 flex flex-wrap gap-4">
-              {member.links.map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-violet-400 hover:text-cyan-400"
-                >
-                  {l.label} ↗
-                </a>
-              ))}
-            </div>
           </div>
         ))}
       </div>
       <p className="mt-12 text-center text-sm text-slate-500">
-        Want to contribute? Join our Telegram or email hello@veloxdag.com
+        Want to contribute? Join our{" "}
+        <a href="https://t.me/VeloxDAG" className="text-cyan-400 hover:underline">Telegram</a>
       </p>
     </div>
   );
 }
+

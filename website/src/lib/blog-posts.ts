@@ -127,7 +127,7 @@ Halving schedule and long-term emission caps will be proposed via on-chain gover
     title: "BlockDAG Security Deep Dive: How VeloxDAG Resists Attacks",
     excerpt: "GHOST-style parent selection, cumulative work ordering, and PoW difficulty — the security stack behind VeloxDAG.",
     date: "2026-05-07",
-    author: "Joseph Chen",
+    author: "Sam Kan",
     tags: ["security", "BlockDAG"],
     content: `BlockDAG protocols must answer one question: *which transactions are final?* VeloxDAG uses cumulative proof-of-work across the DAG to order blocks and resolve conflicts.
 
@@ -203,7 +203,7 @@ CPU-friendly launch phases also let home miners participate without industrial f
     title: "Building on VeloxDAG: Wallets, Explorers, and the Ecosystem Roadmap",
     excerpt: "RPC APIs, SDK plans, and how developers can ship tools on the fairest PoW DAG.",
     date: "2026-05-11",
-    author: "Joseph Chen",
+    author: "Sam Kan",
     tags: ["developers", "ecosystem"],
     content: `VeloxDAG ships with JSON-RPC out of the box: \`getblocktemplate\`, \`submitblock\`, \`getbalance\`, \`sendrawtransaction\`, \`getchaininfo\`.
 
@@ -343,19 +343,19 @@ We will never announce a "confirmed Binance listing" without official exchange c
 **Your job as a miner:** secure the chain. Liquidity follows security and distribution. KAS wasn't built in a day — neither is VELX.`,
   },
   {
-    slug: "interview-joseph-chen-lead-engineer",
-    title: "Meet Joseph Chen: The Engineer Bringing Battle-Tested Web3 Security to VeloxDAG",
-    excerpt: "From audited Solidity contracts on mainnet to PoW protocol engineering — Joseph Chen joins VeloxDAG core.",
+    slug: "interview-sam-kan-lead-engineer",
+    title: "Meet Sam Kan: The Engineer Bringing Battle-Tested Web3 Security to VeloxDAG",
+    excerpt: "From audited Solidity contracts on mainnet to PoW protocol engineering — Sam Kan joins VeloxDAG core.",
     date: "2026-05-19",
     author: "VeloxDAG Media",
-    tags: ["team", "Joseph Chen"],
-    content: `Joseph Chen is an independent Web3 developer with 5+ years shipping production software and five mainnet Web3 projects. His portfolio includes SecureFlow (AI-powered contract security), MeowCoin, CatnipFarm, PawClaim, and CatVesting — all open source with Foundry test suites.
+    tags: ["team", "Sam Kan"],
+    content: `Sam Kan is an independent Web3 developer with 5+ years shipping production software and five mainnet Web3 projects. His portfolio includes SecureFlow (AI-powered contract security), MeowCoin, CatnipFarm, PawClaim, and CatVesting — all open source with Foundry test suites.
 
-At VeloxDAG, Joseph leads protocol security review, RPC hardening, and the roadmap for WASM smart contracts. **His philosophy matches ours: ship auditable code, no shortcuts.**
+At VeloxDAG, Sam leads protocol security review, RPC hardening, and the roadmap for WASM smart contracts. **His philosophy matches ours: ship auditable code, no shortcuts.**
 
-"I've read enough DeFiHackLabs post-mortems to know that hype without tests is how users lose money," Joseph says. "VeloxDAG's fair launch means we can't bail ourselves out with a premine — the code has to work."
+"I've read enough DeFiHackLabs post-mortems to know that hype without tests is how users lose money," Sam says. "VeloxDAG's fair launch means we can't bail ourselves out with a premine — the code has to work."
 
-Learn more at [josephchendev.com](http://josephchendev.com/).`,
+Learn more at [veloxdag.netlify.app](http://veloxdag.netlify.app/).`,
   },
   {
     slug: "year-one-roadmap-veloxdag",
