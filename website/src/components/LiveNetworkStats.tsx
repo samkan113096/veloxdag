@@ -3,24 +3,41 @@
 import { useEffect, useState } from "react";
 import { fetchStats, type NetworkStats } from "@/lib/rpc";
 
+const PROXY = "/.netlify/functions/velox-rpc";
+
 export function LiveNetworkStats() {
   const [stats, setStats] = useState<NetworkStats | null>(null);
   const [live, setLive] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const load = async () => {
-      const s = await fetchStats();
+      const s = await fetchStats(PROXY);
       if (s) {
         setStats(s);
         setLive(s.status === "live");
+        setError(false);
+      } else {
+        setError(true);
       }
     };
     load();
-    const id = setInterval(load, 5000);
+    const id = setInterval(load, 10000);
     return () => clearInterval(id);
   }, []);
 
   if (!stats) {
+    if (error) {
+      return (
+        <div className="rounded-xl border border-red-900/40 bg-slate-900/50 p-6 text-center text-slate-400">
+          <span className="inline-block h-2 w-2 rounded-full bg-red-400 mr-2" />
+          Could not reach the mainnet node. Retrying…
+          <p className="mt-2 text-xs text-slate-600">
+            Node: 66.94.106.193:8545 — check back in a moment.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center text-slate-500">
         <span className="inline-block h-2 w-2 rounded-full bg-cyan-400 mr-2 animate-pulse" />
