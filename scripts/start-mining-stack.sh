@@ -31,8 +31,11 @@ pkill -f "velox-miner.*$PORT" 2>/dev/null || true
 sleep 1
 
 echo "Starting VeloxDAG node (datadir: $DATADIR, port: $PORT)"
-NODE_ARGS=(-datadir "$DATADIR" -port "$PORT")
+NODE_ARGS=(-datadir "$DATADIR" -port "$PORT" -p2pport 37373)
 [[ "$LAN" == "1" || "$LAN" == "true" ]] && NODE_ARGS+=(-lan)
+
+SEEDS="${VELOX_SEEDS:-}"
+[[ -n "$SEEDS" ]] && NODE_ARGS+=(-seeds "$SEEDS")
 
 nohup ./bin/veloxd "${NODE_ARGS[@]}" >> "$LOGS/node.log" 2>&1 &
 echo $! > "$LOGS/node.pid"
@@ -58,6 +61,8 @@ echo "✅ Mining stack running"
 echo "   Wallet:  $WALLET"
 echo "   Address: $ADDR"
 echo "   RPC:     http://127.0.0.1:$PORT"
+echo "   P2P:     port 37373 (for peer connections)"
+echo "   To join another node: VELOX_SEEDS=IP:37373 ./scripts/start-mining-stack.sh"
 echo "   Logs:    $LOGS/"
 echo ""
 echo "   Check balance: $ROOT/scripts/balance.sh $WALLET"

@@ -24,7 +24,7 @@
 
 ```bash
 # 1. Clone
-git clone https://github.com/SelfLearnedDev2027/veloxdag.git
+git clone https://github.com/samkan113096/veloxdag.git
 cd veloxdag/chain
 
 # 2. Build (requires Go 1.22+)

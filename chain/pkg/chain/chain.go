@@ -346,3 +346,64 @@ func typesBlockHash(s string) string {
 	sum := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(sum[:])
 }
+
+// ---- P2P adapter methods ----
+
+// GetBlockCount returns current block count (safe for p2p).
+func (s *State) GetBlockCount() uint64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.BlockCount
+}
+
+// GetGenesisHash returns the genesis block hash.
+func (s *State) GetGenesisHash() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, tip := range s.Tips {
+		// walk back to height 0
+		_ = tip
+	}
+	for _, b := range s.Blocks {
+		if b.Header.Height == 0 {
+			return b.Hash
+		}
+	}
+	return ""
+}
+
+// GetBlocksFromHeight returns serialised blocks starting at height from.
+func (s *State) GetBlocksFromHeight(from uint64, limit int) []json.RawMessage {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := []json.RawMessage{}
+	for _, b := range s.Blocks {
+		if b.Header.Height >= from {
+			raw, err := json.Marshal(b)
+			if err == nil {
+				out = append(out, raw)
+			}
+		}
+		if len(out) >= limit {
+			break
+		}
+	}
+	return out
+}
+
+// HandleRemoteBlock processes a block received from a peer.
+func (s *State) HandleRemoteBlock(raw json.RawMessage) error {
+	var block types.Block
+	if err := json.Unmarshal(raw, &block); err != nil {
+		return fmt.Errorf("unmarshal peer block: %w", err)
+	}
+	return s.SubmitBlock(&block)
+}
+
+// GetBlockByHash returns one block or nil.
+func (s *State) GetBlockByHash(hash string) *types.Block {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.Blocks[hash]
+}
+

@@ -8,7 +8,7 @@ export const siteConfig = {
   email: "hello@veloxdag.com",
   twitter: "https://twitter.com/VeloxDAG",
   telegram: "https://t.me/VeloxDAG",
-  github: "https://github.com/veloxdag",
+  github: "https://github.com/samkan113096/veloxdag",
   keywords: [
     "VeloxDAG",
     "VELX",

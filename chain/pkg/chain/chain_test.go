@@ -49,8 +49,8 @@ func TestMineAndSubmitBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 	bal := s.GetBalance(miner)
-	if bal != types.CoinbaseReward {
-		t.Fatalf("balance=%d want %d", bal, types.CoinbaseReward)
+	if bal != types.BlockReward(1) {
+		t.Fatalf("balance=%d want %d", bal, types.BlockReward(1))
 	}
 	if s.BlockCount != 2 {
 		t.Fatalf("blockCount=%d want 2", s.BlockCount)
@@ -77,7 +77,7 @@ func TestPersistReload(t *testing.T) {
 	if s2.dataDir != dir {
 		t.Fatalf("dataDir lost after load: %q", s2.dataDir)
 	}
-	if s2.GetBalance(miner) != types.CoinbaseReward {
+	if s2.GetBalance(miner) != types.BlockReward(1) {
 		t.Fatalf("reload balance mismatch")
 	}
 	if s2.BlockCount != 2 {

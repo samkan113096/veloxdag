@@ -7,12 +7,14 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/veloxdag/veloxdag/pkg/chain"
+	"github.com/veloxdag/veloxdag/pkg/p2p"
 	"github.com/veloxdag/veloxdag/pkg/pow"
 	"github.com/veloxdag/veloxdag/pkg/types"
 )
 
 type Server struct {
-	State *chain.State
+	State   *chain.State
+	P2PNode *p2p.Node
 }
 
 type jsonRPCReq struct {
@@ -32,8 +34,8 @@ type jsonRPCResp struct {
 	ID any `json:"id"`
 }
 
-func NewServer(state *chain.State) *Server {
-	return &Server{State: state}
+func NewServer(state *chain.State, p2pNode *p2p.Node) *Server {
+	return &Server{State: state, P2PNode: p2pNode}
 }
 
 func (s *Server) Routes() http.Handler {
@@ -46,21 +48,26 @@ func (s *Server) Routes() http.Handler {
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	peers := 0
+	if s.P2PNode != nil {
+		peers = s.P2PNode.PeerCount()
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok","chain":"VeloxDAG"}`))
+	fmt.Fprintf(w, `{"status":"ok","chain":"VeloxDAG","peers":%d}`, peers)
 }
 
 func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	blocks, diff, supply, tips := s.State.GetChainInfo()
-	currentReward := types.BlockReward(blocks) // next block approx
-	if blocks > 0 {
-		currentReward = types.BlockReward(blocks)
-	}
+	currentReward := types.BlockReward(blocks)
 	remaining := uint64(0)
 	if supply < types.MaxSupply {
 		remaining = types.MaxSupply - supply
 	}
 	minedPct := float64(supply) / float64(types.MaxSupply) * 100
+	peers := 0
+	if s.P2PNode != nil {
+		peers = s.P2PNode.PeerCount()
+	}
 	info := map[string]any{
 		"name":            types.ChainName,
 		"ticker":          types.Ticker,
@@ -74,11 +81,11 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		"minedPercent":    fmt.Sprintf("%.4f", minedPct),
 		"halvingInterval": types.HalvingInterval,
 		"blocks":          blocks,
-		"tips":            s.State.GetTips(),
 		"difficulty":      diff,
 		"totalSupply":     types.FormatVELX(supply),
 		"totalMined":      types.FormatVELX(supply),
 		"tipCount":        tips,
+		"peers":           peers,
 		"status":          "live",
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -104,6 +111,12 @@ func (s *Server) handleRPC(w http.ResponseWriter, r *http.Request) {
 		s.getChainInfo(w, req)
 	case "gettips":
 		s.getTips(w, req)
+	case "getblock":
+		s.getBlock(w, req)
+	case "addpeer":
+		s.addPeer(w, req)
+	case "getpeerinfo":
+		s.getPeerInfo(w, req)
 	default:
 		writeErr(w, req.ID, -32601, "method not found")
 	}
@@ -153,6 +166,11 @@ func (s *Server) submitBlock(w http.ResponseWriter, req jsonRPCReq) {
 		writeErr(w, req.ID, -32000, err.Error())
 		return
 	}
+	// Gossip the new block to all P2P peers
+	if s.P2PNode != nil {
+		raw, _ := json.Marshal(p.Block)
+		s.P2PNode.BroadcastBlock(raw)
+	}
 	writeOK(w, req.ID, map[string]string{"hash": p.Block.Hash, "status": "accepted"})
 }
 
@@ -187,6 +205,10 @@ func (s *Server) getChainInfo(w http.ResponseWriter, req jsonRPCReq) {
 	if supply >= types.MaxSupply {
 		remaining = 0
 	}
+	peers := 0
+	if s.P2PNode != nil {
+		peers = s.P2PNode.PeerCount()
+	}
 	writeOK(w, req.ID, map[string]any{
 		"chain":           types.ChainName,
 		"blocks":          blocks,
@@ -198,12 +220,61 @@ func (s *Server) getChainInfo(w http.ResponseWriter, req jsonRPCReq) {
 		"blockReward":     types.FormatVELX(types.BlockReward(blocks)),
 		"halvingInterval": types.HalvingInterval,
 		"tips":            tips,
+		"peers":           peers,
 		"fairLaunch":      true,
 	})
 }
 
 func (s *Server) getTips(w http.ResponseWriter, req jsonRPCReq) {
 	writeOK(w, req.ID, s.State.GetTips())
+}
+
+type getBlockParams struct {
+	Hash string `json:"hash"`
+}
+
+func (s *Server) getBlock(w http.ResponseWriter, req jsonRPCReq) {
+	var p getBlockParams
+	_ = json.Unmarshal(req.Params, &p)
+	block := s.State.GetBlockByHash(p.Hash)
+	if block == nil {
+		writeErr(w, req.ID, -32000, "block not found")
+		return
+	}
+	writeOK(w, req.ID, block)
+}
+
+type addPeerParams struct {
+	Addr string `json:"addr"`
+}
+
+func (s *Server) addPeer(w http.ResponseWriter, req jsonRPCReq) {
+	if s.P2PNode == nil {
+		writeErr(w, req.ID, -32000, "p2p not enabled")
+		return
+	}
+	var p addPeerParams
+	_ = json.Unmarshal(req.Params, &p)
+	if p.Addr == "" {
+		writeErr(w, req.ID, -32602, "addr required")
+		return
+	}
+	if err := s.P2PNode.ConnectPeer(p.Addr); err != nil {
+		writeErr(w, req.ID, -32000, err.Error())
+		return
+	}
+	writeOK(w, req.ID, map[string]string{"status": "connecting", "addr": p.Addr})
+}
+
+func (s *Server) getPeerInfo(w http.ResponseWriter, req jsonRPCReq) {
+	peers := []string{}
+	if s.P2PNode != nil {
+		peers = s.P2PNode.PeerAddrs()
+	}
+	writeOK(w, req.ID, map[string]any{
+		"count": len(peers),
+		"peers": peers,
+	})
 }
 
 func writeOK(w http.ResponseWriter, id any, result any) {
@@ -215,7 +286,7 @@ func writeErr(w http.ResponseWriter, id any, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jsonRPCResp{
 		JSONRPC: "2.0",
-		Error:   &struct {
+		Error: &struct {
 			Code    int    `json:"code"`
 			Message string `json:"message"`
 		}{Code: code, Message: msg},
