@@ -121,12 +121,17 @@ curl http://127.0.0.1:8545/api/stats
 
       <h2>Connect peers (join the fair-launch network)</h2>
       <p>
-        To mine on the <em>shared</em> mainnet rather than a solo chain, connect your node to an
-        active peer. Ask in the{" "}
-        <a href="https://t.me/VeloxDAG" className="text-cyan-400 hover:underline">
-          Telegram community
-        </a>{" "}
-        for current seed node IPs.
+        To mine on the <em>shared</em> mainnet, connect your node to the official seed node:
+      </p>
+      <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto text-sm text-cyan-200">
+{`# Connect to the official VeloxDAG seed node at launch:
+./bin/veloxd -datadir ~/.veloxdag -port 8545 -lan -seeds 66.94.106.193:37373
+
+# Then mine against it:
+./bin/velox-miner -rpc http://66.94.106.193:8545 -miner velx1YOUR_ADDRESS -threads 8`}
+      </pre>
+      <p>
+        Or add a peer to your already-running node:
       </p>
       <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto text-sm text-cyan-200">
 {`# Add a peer to your running node:
