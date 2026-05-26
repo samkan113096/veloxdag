@@ -172,8 +172,11 @@ export default function WalletPage() {
       if (newPassword !== newPassword2) { setCreateMsg({ ok: false, msg: "Passwords do not match." }); return; }
       const kp = await mnemonicToKeypair(newMnemonic, newPassword);
       const blob = await encryptWallet(newMnemonic, newPassword);
-      saveStoredWallet(newLabel || "My Wallet", blob, kp.address);
-      setSavedWallets(loadStoredWallets());
+      const label = newLabel.trim() || "My Wallet";
+      saveStoredWallet(label, blob, kp.address);
+      const updated = loadStoredWallets();
+      setSavedWallets(updated);
+      setSelectedLabel(label);
       setCreateMsg({ ok: true, msg: `Wallet created! Address: ${kp.address}` });
       // Auto-unlock
       setKeypair(kp);

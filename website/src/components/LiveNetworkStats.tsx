@@ -23,11 +23,10 @@ export function LiveNetworkStats() {
   if (!stats) {
     return (
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-center text-slate-500">
-        <span className="inline-block h-2 w-2 rounded-full bg-amber-500 mr-2 animate-pulse" />
-        Connecting to VeloxDAG network…
-        <p className="mt-2 text-xs">
-          Stats show live once your node is reachable. Check the{" "}
-          <a href="/tutorial" className="text-cyan-400 underline">mining tutorial</a>.
+        <span className="inline-block h-2 w-2 rounded-full bg-cyan-400 mr-2 animate-pulse" />
+        Loading live stats from the VeloxDAG mainnet…
+        <p className="mt-2 text-xs text-slate-600">
+          Fetching from the seed node at 66.94.106.193 — this takes 1–2 seconds.
         </p>
       </div>
     );
