@@ -17,7 +17,8 @@ const (
 	MaxSupply       = 21_000_000_00000000 // 21 million VELX
 
 	// Block timing
-	// 60 s/block → 210,000 blocks ≈ 400 days (first halving) → majority mined in ~4+ years
+	// 60 s/block → 210,000 blocks ≈ 146 days per halving period (first halving ~5 months in)
+	// → majority of the 21M cap takes several years, similar cadence to BTC at 10 min/block
 	TargetBlockSec = 60
 
 	// Retarget every 144 blocks (~2.4 h at target pace); clamp to ±4× per window.

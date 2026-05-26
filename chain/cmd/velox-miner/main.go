@@ -64,7 +64,7 @@ func mineLoop(rpcURL, miner string, threadID int, blocksFound *uint64) {
 		}
 		atomic.AddUint64(blocksFound, 1)
 		log.Printf("[thread %d] BLOCK FOUND! hash=%s height=%d reward=%s VELX",
-			threadID, hash, block.Header.Height, types.FormatVELX(types.CoinbaseReward))
+			threadID, hash, block.Header.Height, types.FormatVELX(types.BlockReward(block.Header.Height)))
 		nonceStart = uint64(threadID) * 1_000_000_000
 	}
 }

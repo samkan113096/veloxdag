@@ -321,14 +321,10 @@ export default function WalletPage() {
                 ["Difficulty", stats.difficulty.toLocaleString()],
               ] as [string, string][]
             ).map(([k, v]) => (
-              <>
-                <dt key={`dt-${k}`} className="text-slate-500">
-                  {k}
-                </dt>
-                <dd key={`dd-${k}`} className="text-white font-mono text-xs">
-                  {v}
-                </dd>
-              </>
+              <div key={k} className="contents">
+                <dt className="text-slate-500">{k}</dt>
+                <dd className="text-white font-mono text-xs">{v}</dd>
+              </div>
             ))}
           </dl>
         </div>

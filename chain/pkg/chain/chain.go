@@ -247,10 +247,23 @@ func (s *State) SubmitBlock(block *types.Block) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	h := block.Header
+
+	// Block must commit to at least the current chain difficulty —
+	// prevents low-difficulty spam blocks from being accepted.
+	if h.Difficulty < s.Difficulty {
+		return fmt.Errorf("block difficulty %d below chain difficulty %d", h.Difficulty, s.Difficulty)
+	}
+
 	if !pow.VerifyBlock(h.Version, h.Parents, h.Timestamp, h.Difficulty, h.Nonce,
 		h.MerkleRoot, h.Miner, h.Height, h.ExtraData, block.Hash) {
 		return fmt.Errorf("invalid proof of work")
 	}
+
+	// Merkle root must match the actual transactions in the block.
+	if got := merkleRoot(block.Transactions); got != h.MerkleRoot {
+		return fmt.Errorf("merkle root mismatch: got %s want %s", got, h.MerkleRoot)
+	}
+
 	for _, p := range block.Header.Parents {
 		if _, ok := s.Blocks[p]; !ok {
 			return fmt.Errorf("unknown parent %s", p)

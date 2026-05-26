@@ -6,8 +6,8 @@ CHAIN="$ROOT/chain"
 LOGS="$ROOT/logs"
 DATADIR="${VELOX_DATADIR:-$HOME/.veloxdag}"
 PORT="${VELOX_PORT:-8545}"
-WALLET="${VELOX_WALLET:-$CHAIN/wallet_72f501b5.json}"
-THREADS="${VELOX_THREADS:-$(sysctl -n hw.ncpu 2>/dev/null || echo 8)}"
+WALLET="${VELOX_WALLET:-}"
+THREADS="${VELOX_THREADS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 8)}"
 LAN="${VELOX_LAN:-1}"
 
 mkdir -p "$LOGS"
@@ -17,10 +17,18 @@ for bin in veloxd velox-miner velox-wallet; do
   [[ -f bin/$bin ]] || go build -o "bin/$bin" "./cmd/$bin"
 done
 
-if [[ ! -f "$WALLET" ]]; then
-  echo "Creating wallet..."
+# Auto-discover wallet: VELOX_WALLET env var → newest wallet_*.json in chain/ → create one
+if [[ -z "$WALLET" ]]; then
+  NEWEST=$(ls -t wallet_*.json 2>/dev/null | head -1 || true)
+  if [[ -n "$NEWEST" ]]; then
+    WALLET="$CHAIN/$NEWEST"
+  fi
+fi
+
+if [[ -z "$WALLET" || ! -f "$WALLET" ]]; then
+  echo "No wallet found — creating one..."
   ./bin/velox-wallet new
-  WALLET=$(ls -t wallet_*.json | head -1)
+  WALLET="$CHAIN/$(ls -t wallet_*.json | head -1)"
 fi
 
 ADDR=$(python3 -c "import json; print(json.load(open('$WALLET'))['address'])")
