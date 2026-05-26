@@ -35,7 +35,8 @@ export const metadata: Metadata = {
     creator: "@VeloxDAG",
   },
   robots: { index: true, follow: true },
-  alternates: { canonical: "https://veloxdag.netlify.app" },
+  alternates: { canonical: "https://veloxdag.xyz" },
+  verification: { google: "j1oaCNxHBWhWd2VMaDcSwd_EKsMT_uGM_pX5-L36H44" },
 };
 
 export default function RootLayout({
@@ -53,11 +54,11 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebSite",
               "name": "VeloxDAG",
-              "url": "https://veloxdag.netlify.app",
+              "url": "https://veloxdag.xyz",
               "description": siteConfig.description,
               "potentialAction": {
                 "@type": "SearchAction",
-                "target": "https://veloxdag.netlify.app/blog?q={search_term_string}",
+                "target": "https://veloxdag.xyz/blog?q={search_term_string}",
                 "query-input": "required name=search_term_string"
               }
             })

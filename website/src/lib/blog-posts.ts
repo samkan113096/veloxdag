@@ -355,7 +355,7 @@ At VeloxDAG, Sam leads protocol security review, RPC hardening, and the roadmap 
 
 "I've read enough DeFiHackLabs post-mortems to know that hype without tests is how users lose money," Sam says. "VeloxDAG's fair launch means we can't bail ourselves out with a premine — the code has to work."
 
-Learn more at [veloxdag.netlify.app](http://veloxdag.netlify.app/).`,
+Learn more at [veloxdag.xyz](https://veloxdag.xyz/).`,
   },
   {
     slug: "year-one-roadmap-veloxdag",
