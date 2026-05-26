@@ -1,0 +1,26 @@
+export const siteConfig = {
+  name: "VeloxDAG",
+  tagline: "The Fastest Fair-Launch PoW BlockDAG",
+  description:
+    "VeloxDAG (VELX) is a fair-launch Proof-of-Work BlockDAG blockchain. No premine, no ICO, no VC. Mine VELX with your CPU and join the next-generation decentralized network.",
+  url: "https://veloxdag.netlify.app",
+  ticker: "VELX",
+  email: "hello@veloxdag.com",
+  twitter: "https://twitter.com/VeloxDAG",
+  telegram: "https://t.me/VeloxDAG",
+  github: "https://github.com/veloxdag",
+  keywords: [
+    "VeloxDAG",
+    "VELX",
+    "BlockDAG",
+    "Proof of Work",
+    "fair launch",
+    "crypto mining",
+    "Kaspa alternative",
+    "decentralized blockchain",
+    "PoW cryptocurrency",
+    "CPU mining",
+    "no premine",
+    "Web3",
+  ],
+};

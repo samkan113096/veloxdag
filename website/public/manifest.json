@@ -1,0 +1,9 @@
+{
+  "name": "VeloxDAG",
+  "short_name": "VeloxDAG",
+  "description": "Fair Launch PoW BlockDAG — Mine VELX",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06080f",
+  "theme_color": "#06b6d4"
+}
