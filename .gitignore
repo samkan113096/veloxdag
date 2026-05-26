@@ -1,0 +1,29 @@
+node_modules/
+website/.next/
+website/out/
+
+# Chain data — NEVER commit
+.veloxdag/
+**/chain.json
+
+# Wallets — NEVER commit private keys
+wallet_*.json
+
+# Logs & pids
+logs/
+*.pid
+*.log
+
+# Env
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go binaries
+chain/bin/
+*.exe
+*.test

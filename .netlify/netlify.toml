@@ -1,0 +1,31 @@
+functionsDirectory = "/Users/samkan/New Blockchain/netlify/functions"
+functionsDirectoryOrigin = "config"
+plugins = []
+headers = []
+redirects = []
+
+[build]
+publish = "/Users/samkan/New Blockchain/website/out"
+publishOrigin = "config"
+commandOrigin = "config"
+command = "npm run build"
+base = "/Users/samkan/New Blockchain/website"
+functions = "/Users/samkan/New Blockchain/netlify/functions"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[functions]
+
+[functions."*"]
