@@ -2,6 +2,9 @@ node_modules/
 website/.next/
 website/out/
 
+# Netlify build cache — auto-generated, not source
+website/.netlify/
+
 # Chain data — NEVER commit
 .veloxdag/
 **/chain.json

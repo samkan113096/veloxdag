@@ -1,4 +1,0 @@
-User-Agent: *
-Allow: /
-
-Sitemap: https://veloxdag.netlify.app/sitemap.xml
