@@ -105,6 +105,8 @@ func (s *Server) handleRPC(w http.ResponseWriter, r *http.Request) {
 		s.submitBlock(w, req)
 	case "getbalance":
 		s.getBalance(w, req)
+	case "getnonce":
+		s.getNonce(w, req)
 	case "sendrawtransaction":
 		s.sendTx(w, req)
 	case "getchaininfo":
@@ -183,6 +185,13 @@ func (s *Server) getBalance(w http.ResponseWriter, req jsonRPCReq) {
 	_ = json.Unmarshal(req.Params, &p)
 	bal := s.State.GetBalance(p.Address)
 	writeOK(w, req.ID, map[string]any{"address": p.Address, "balance": bal, "formatted": types.FormatVELX(bal)})
+}
+
+func (s *Server) getNonce(w http.ResponseWriter, req jsonRPCReq) {
+	var p balanceParams
+	_ = json.Unmarshal(req.Params, &p)
+	nonce := s.State.GetNonce(p.Address)
+	writeOK(w, req.ID, map[string]any{"address": p.Address, "nonce": nonce})
 }
 
 func (s *Server) sendTx(w http.ResponseWriter, req jsonRPCReq) {

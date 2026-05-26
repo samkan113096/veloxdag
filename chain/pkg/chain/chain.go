@@ -167,6 +167,12 @@ func (s *State) GetBalance(addr string) uint64 {
 	return s.Balances[addr]
 }
 
+func (s *State) GetNonce(addr string) uint64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.Nonces[addr]
+}
+
 func (s *State) AddTx(tx types.Transaction) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
