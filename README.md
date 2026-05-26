@@ -112,8 +112,8 @@ cd website && npm install && npm run dev
 ```
 
 Live at **https://veloxdag.netlify.app** — includes:
-- Live network stats (updates every 5s)
-- Wallet page (check balance, send VELX)
+- Live network stats (updates every 5s via Netlify proxy → VPS node)
+- Browser web wallet (create seed phrase, send/receive VELX, check balance)
 - 20 blog posts, litepaper, mining tutorial, team
 
 ## Verify everything works
@@ -135,8 +135,11 @@ cd chain && go test ./... -v
 - [x] Marketing website (Next.js, SEO, 20 blogs)
 - [x] Litepaper (22 sections)
 - [x] 90-day social content calendar
-- [ ] P2P networking (shared mainnet)
-- [ ] Transaction signature verification (Ed25519)
+- [x] P2P networking (mainnet seed node live)
+- [x] Ed25519 transaction signing
+- [x] Browser web wallet (seed phrase, send/receive)
+- [x] VPS mainnet node (66.94.106.193)
+- [x] Netlify proxy for CORS-safe frontend stats
 - [ ] Block explorer
 - [ ] Mining pools
 - [ ] Hardware wallet support
@@ -144,9 +147,8 @@ cd chain && go test ./... -v
 
 ## Team
 
-**Joseph Chen** — Lead Protocol & Security Engineer  
-5+ years Web3 · Solidity · Foundry · DeFi · SecureFlow · MeowCoin · CatnipFarm  
-[josephchendev.com](http://josephchendev.com/) · [@SelfLearnedDev2027](https://github.com/SelfLearnedDev2027)
+**Sam Kan** — Lead Protocol & Security Engineer  
+Blockchain architect · PoW / DAG design · Fair-launch advocate
 
 ## Disclaimer
 
