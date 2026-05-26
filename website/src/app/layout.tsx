@@ -47,6 +47,7 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#06b6d4" />
+        <meta name="google-site-verification" content="j1oaCNxHBWhWd2VMaDcSwd_EKsMT_uGM_pX5-L36H44" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
