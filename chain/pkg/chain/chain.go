@@ -15,22 +15,30 @@ import (
 )
 
 const (
-	InitialDifficulty = 4
-	RetargetInterval  = 30
-	MaxMempool        = 5000
+	// InitialDifficulty — ~60 s per block on a single modern CPU thread (≈2 M hash/s).
+	// The time-based retarget will converge to TargetBlockSec within 1-2 windows.
+	InitialDifficulty = 50_000_000
+
+	// GenesisDifficulty — genesis block mines instantly so startup doesn't stall.
+	// State.Difficulty (InitialDifficulty) governs all subsequent blocks.
+	GenesisDifficulty = 1
+
+	MaxMempool = 5000
 )
 
 type State struct {
-	mu          sync.RWMutex
-	Blocks      map[string]*types.Block `json:"blocks"`
-	Tips        []string                `json:"tips"`
-	Balances    map[string]uint64       `json:"balances"`
-	Nonces      map[string]uint64       `json:"nonces"`
-	Mempool     []types.Transaction     `json:"-"`
-	Difficulty  uint64                  `json:"difficulty"`
-	TotalSupply uint64                  `json:"totalSupply"`
-	BlockCount  uint64                  `json:"blockCount"`
-	dataDir     string
+	mu               sync.RWMutex
+	Blocks           map[string]*types.Block `json:"blocks"`
+	Tips             []string                `json:"tips"`
+	Balances         map[string]uint64       `json:"balances"`
+	Nonces           map[string]uint64       `json:"nonces"`
+	Mempool          []types.Transaction     `json:"-"`
+	Difficulty       uint64                  `json:"difficulty"`
+	TotalSupply      uint64                  `json:"totalSupply"`
+	BlockCount       uint64                  `json:"blockCount"`
+	LastRetargetBlock uint64                 `json:"lastRetargetBlock"`
+	LastRetargetTime  int64                  `json:"lastRetargetTime"`
+	dataDir          string
 }
 
 func NewState(dataDir string) *State {
@@ -76,6 +84,9 @@ func (s *State) Load() error {
 	if s.Mempool == nil {
 		s.Mempool = []types.Transaction{}
 	}
+	if s.LastRetargetTime == 0 {
+		s.LastRetargetTime = types.Now()
+	}
 	return nil
 }
 
@@ -103,7 +114,7 @@ func (s *State) InitGenesis() error {
 			Version:    1,
 			Parents:    []string{},
 			Timestamp:  1717200000, // fair launch anchor
-			Difficulty: InitialDifficulty,
+			Difficulty: GenesisDifficulty,
 			Nonce:      0,
 			MerkleRoot: "0000000000000000000000000000000000000000000000000000000000000000",
 			Miner:      "velx1fairlaunch000000000000000000000000",
@@ -112,7 +123,6 @@ func (s *State) InitGenesis() error {
 		},
 		Transactions: []types.Transaction{},
 	}
-	// Mine genesis nonce
 	prefix := pow.HeaderPrefix(
 		genesis.Header.Version, genesis.Header.Parents, genesis.Header.Timestamp,
 		genesis.Header.Difficulty, genesis.Header.MerkleRoot,
@@ -124,9 +134,16 @@ func (s *State) InitGenesis() error {
 	if !pow.Verify(genesis.Hash, genesis.Header.Difficulty) {
 		return fmt.Errorf("failed to mine genesis block")
 	}
+
+	// Genesis block does not carry a coinbase reward (fair launch: first miner earns block 1).
 	s.Blocks[genesis.Hash] = genesis
 	s.Tips = []string{genesis.Hash}
 	s.BlockCount = 1
+
+	// Seed retarget window from genesis timestamp
+	s.LastRetargetBlock = 1
+	s.LastRetargetTime = genesis.Header.Timestamp
+
 	return s.saveLocked()
 }
 
@@ -239,17 +256,13 @@ func (s *State) SubmitBlock(block *types.Block) error {
 
 	// Coinbase (BTC-style halving by height)
 	reward := types.BlockReward(block.Header.Height)
-	if reward == 0 {
-		return fmt.Errorf("block subsidy exhausted at height %d", block.Header.Height)
-	}
 	if s.TotalSupply+reward > types.MaxSupply {
 		reward = types.MaxSupply - s.TotalSupply
-		if reward == 0 {
-			return fmt.Errorf("max supply %s reached", types.FormatVELX(types.MaxSupply))
-		}
 	}
-	s.Balances[block.Header.Miner] += reward
-	s.TotalSupply += reward
+	if reward > 0 {
+		s.Balances[block.Header.Miner] += reward
+		s.TotalSupply += reward
+	}
 
 	// Apply txs
 	applied := make(map[string]bool)
@@ -265,7 +278,6 @@ func (s *State) SubmitBlock(block *types.Block) error {
 		s.Balances[tx.To] += tx.Amount
 		if tx.Fee > 0 && tx.From != "" {
 			s.Balances[block.Header.Miner] += tx.Fee
-			s.TotalSupply += tx.Fee
 		}
 		applied[tx.ID()] = true
 	}
@@ -282,7 +294,7 @@ func (s *State) SubmitBlock(block *types.Block) error {
 	s.Blocks[block.Hash] = block
 	s.BlockCount++
 	s.updateTips(block.Hash, block.Header.Parents)
-	s.maybeRetarget()
+	s.maybeRetarget(block.Header.Timestamp)
 	return s.saveLocked()
 }
 
@@ -303,16 +315,38 @@ func (s *State) updateTips(newHash string, parents []string) {
 	s.Tips = newTips
 }
 
-func (s *State) maybeRetarget() {
-	if s.BlockCount%RetargetInterval != 0 {
+// maybeRetarget adjusts difficulty using a Bitcoin-style time-based algorithm.
+// Every RetargetBlocks blocks, it compares actual elapsed seconds to the ideal
+// (RetargetBlocks × TargetBlockSec) and scales difficulty proportionally.
+// A 4× clamp per window prevents wild oscillations when hash rate spikes.
+func (s *State) maybeRetarget(blockTime int64) {
+	if s.BlockCount-s.LastRetargetBlock < types.RetargetBlocks {
 		return
 	}
-	// Simple retarget: if DAG has many tips, slightly increase difficulty
-	if len(s.Tips) > 3 {
-		s.Difficulty++
-	} else if len(s.Tips) == 1 && s.Difficulty > 1 {
-		s.Difficulty--
+
+	expectedSec := int64(types.RetargetBlocks) * types.TargetBlockSec
+	actualSec := blockTime - s.LastRetargetTime
+	if actualSec <= 0 {
+		actualSec = 1
 	}
+
+	// new = old × (expected / actual)
+	newDiff := s.Difficulty * uint64(expectedSec) / uint64(actualSec)
+
+	// Clamp to ±4× per window (Bitcoin uses ±4×)
+	if newDiff > s.Difficulty*4 {
+		newDiff = s.Difficulty * 4
+	}
+	if newDiff < s.Difficulty/4 {
+		newDiff = s.Difficulty / 4
+	}
+	if newDiff < 1 {
+		newDiff = 1
+	}
+
+	s.Difficulty = newDiff
+	s.LastRetargetBlock = s.BlockCount
+	s.LastRetargetTime = blockTime
 }
 
 func (s *State) saveLocked() error {
@@ -349,21 +383,15 @@ func typesBlockHash(s string) string {
 
 // ---- P2P adapter methods ----
 
-// GetBlockCount returns current block count (safe for p2p).
 func (s *State) GetBlockCount() uint64 {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.BlockCount
 }
 
-// GetGenesisHash returns the genesis block hash.
 func (s *State) GetGenesisHash() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	for _, tip := range s.Tips {
-		// walk back to height 0
-		_ = tip
-	}
 	for _, b := range s.Blocks {
 		if b.Header.Height == 0 {
 			return b.Hash
@@ -372,7 +400,6 @@ func (s *State) GetGenesisHash() string {
 	return ""
 }
 
-// GetBlocksFromHeight returns serialised blocks starting at height from.
 func (s *State) GetBlocksFromHeight(from uint64, limit int) []json.RawMessage {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -391,7 +418,6 @@ func (s *State) GetBlocksFromHeight(from uint64, limit int) []json.RawMessage {
 	return out
 }
 
-// HandleRemoteBlock processes a block received from a peer.
 func (s *State) HandleRemoteBlock(raw json.RawMessage) error {
 	var block types.Block
 	if err := json.Unmarshal(raw, &block); err != nil {
@@ -400,10 +426,8 @@ func (s *State) HandleRemoteBlock(raw json.RawMessage) error {
 	return s.SubmitBlock(&block)
 }
 
-// GetBlockByHash returns one block or nil.
 func (s *State) GetBlockByHash(hash string) *types.Block {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.Blocks[hash]
 }
-

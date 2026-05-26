@@ -9,6 +9,10 @@ import (
 	"github.com/veloxdag/veloxdag/pkg/types"
 )
 
+// testDifficulty is a trivially easy difficulty used in unit tests so they
+// don't spend 60 seconds mining a block.
+const testDifficulty = 1
+
 func TestGenesisFairLaunch(t *testing.T) {
 	dir := t.TempDir()
 	s := NewState(dir)
@@ -34,6 +38,9 @@ func TestMineAndSubmitBlock(t *testing.T) {
 	if err := s.InitGenesis(); err != nil {
 		t.Fatal(err)
 	}
+	// Lower difficulty so tests run in < 1 ms
+	s.Difficulty = testDifficulty
+
 	miner := "velx1testminer000000000000000000000000"
 	block, prefix, err := s.BuildBlockTemplate(miner)
 	if err != nil {
@@ -63,6 +70,8 @@ func TestPersistReload(t *testing.T) {
 	if err := s.InitGenesis(); err != nil {
 		t.Fatal(err)
 	}
+	s.Difficulty = testDifficulty
+
 	miner := "velx1persist0000000000000000000000000"
 	block, prefix, _ := s.BuildBlockTemplate(miner)
 	nonce, hash := pow.Mine(prefix, block.Header.Difficulty, 0)
@@ -89,6 +98,8 @@ func TestRejectInvalidPoW(t *testing.T) {
 	dir := t.TempDir()
 	s := NewState(dir)
 	_ = s.InitGenesis()
+	s.Difficulty = testDifficulty
+
 	block, _, _ := s.BuildBlockTemplate("velx1bad000000000000000000000000000")
 	block.Hash = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 	block.Header.Nonce = 1
@@ -98,7 +109,6 @@ func TestRejectInvalidPoW(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	// ensure temp dirs clean
 	os.Exit(m.Run())
 }
 

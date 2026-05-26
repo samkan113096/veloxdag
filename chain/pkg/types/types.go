@@ -9,18 +9,28 @@ import (
 )
 
 const (
-	InitialReward    = 50_00000000 // 50 VELX per block at launch (8 decimals)
-	CoinbaseReward   = InitialReward
-	Decimals         = 8
-	Ticker           = "VELX"
-	ChainName        = "VeloxDAG"
-	TargetBlockSec   = 10
-	MaxParents       = 2
-	HalvingInterval  = 210_000 // same cadence concept as Bitcoin
-	MaxSupply        = 21_000_000_00000000 // 21 million VELX cap
+	// Emission — Bitcoin-identical math gives 21M total cap.
+	// 50 VELX × 210,000 + 25 VELX × 210,000 + … = 21,000,000 VELX ✓
+	InitialReward   = 50_00000000   // 50.00000000 VELX (8 decimals)
+	CoinbaseReward  = InitialReward // alias kept for tests
+	HalvingInterval = 210_000       // blocks — first halving in ~2 years at 60s/block
+	MaxSupply       = 21_000_000_00000000 // 21 million VELX
+
+	// Block timing
+	// 60 s/block → 210,000 blocks ≈ 400 days (first halving) → majority mined in ~4+ years
+	TargetBlockSec = 60
+
+	// Retarget every 144 blocks (~2.4 h at target pace); clamp to ±4× per window.
+	RetargetBlocks = 144
+
+	// Chain / DAG params
+	Decimals   = 8
+	Ticker     = "VELX"
+	ChainName  = "VeloxDAG"
+	MaxParents = 2
 )
 
-// BlockReward returns the coinbase for a block at the given height (Bitcoin-style halving).
+// BlockReward returns the coinbase for a given block height (BTC-style halving).
 func BlockReward(height uint64) uint64 {
 	halvings := height / HalvingInterval
 	if halvings >= 64 {
