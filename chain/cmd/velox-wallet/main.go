@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/veloxdag/veloxdag/pkg/crypto"
@@ -18,6 +20,8 @@ func main() {
 	switch os.Args[1] {
 	case "new":
 		newWallet()
+	case "balance":
+		checkBalance()
 	case "address":
 		showAddress()
 	case "export":
@@ -31,9 +35,10 @@ func main() {
 func printUsage() {
 	fmt.Println(`VeloxDAG Wallet CLI
 
-  velox-wallet new              Create new wallet (prints address + saves key)
-  velox-wallet address -key HEX Show address from private key
-  velox-wallet export -file F   Export wallet from file`)
+  velox-wallet new                        Create new wallet (prints address + saves key)
+  velox-wallet balance <address> [-rpc U] Check on-chain balance (default: mainnet seed)
+  velox-wallet address -key HEX           Show address from private key
+  velox-wallet export  -file F            Export wallet from file`)
 }
 
 func newWallet() {
@@ -55,6 +60,49 @@ func newWallet() {
 	fmt.Println("Address:", addr)
 	fmt.Println("Saved to:", filename)
 	fmt.Println("\n⚠️  Keep your private key safe. Never share it.")
+}
+
+func checkBalance() {
+	fs := flag.NewFlagSet("balance", flag.ExitOnError)
+	rpcURL := fs.String("rpc", "http://66.94.106.193:8545", "node RPC URL")
+	fs.Parse(os.Args[2:])
+
+	addr := fs.Arg(0)
+	if addr == "" {
+		fmt.Println("Usage: velox-wallet balance <address> [-rpc URL]")
+		os.Exit(1)
+	}
+
+	body, _ := json.Marshal(map[string]any{
+		"jsonrpc": "2.0",
+		"method":  "getbalance",
+		"params":  map[string]string{"address": addr},
+		"id":      1,
+	})
+	resp, err := http.Post(*rpcURL, "application/json", bytes.NewReader(body))
+	if err != nil {
+		fmt.Println("Error connecting to node:", err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Result struct {
+			Formatted string `json:"formatted"`
+		} `json:"result"`
+		Error *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		fmt.Println("Error reading response:", err)
+		os.Exit(1)
+	}
+	if result.Error != nil {
+		fmt.Println("RPC error:", result.Error.Message)
+		os.Exit(1)
+	}
+	fmt.Printf("%s  %s VELX\n", addr, result.Result.Formatted)
 }
 
 func showAddress() {

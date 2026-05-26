@@ -36,7 +36,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} VeloxDAG · Fair Launch PoW BlockDAG · solidity ^0.8.20
+        © {new Date().getFullYear()} VeloxDAG · Fair Launch PoW BlockDAG · Open Source
       </div>
     </footer>
   );

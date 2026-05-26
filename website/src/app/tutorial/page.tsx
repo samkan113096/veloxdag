@@ -116,9 +116,9 @@ go build -o bin/veloxd ./cmd/veloxd`}
 ./bin/velox-miner -rpc http://66.94.106.193:8545 -miner velx1YOUR_ADDRESS -threads 4
 
 # Use all your CPU cores for maximum hash rate:
-./bin/velox-miner -rpc http://66.94.106.193:8545 -miner velx1YOUR_ADDRESS -threads $(nproc)
-#   macOS/Linux: $(nproc) auto-fills your core count
-#   Windows:     replace $(nproc) with a number, e.g. -threads 8`}
+#   Linux:  -threads $(nproc)
+#   macOS:  -threads $(sysctl -n hw.ncpu)
+./bin/velox-miner -rpc http://66.94.106.193:8545 -miner velx1YOUR_ADDRESS -threads 4`}
       </pre>
       <p>
         When a block is found you&apos;ll see:
@@ -163,13 +163,14 @@ go build -o bin/veloxd ./cmd/veloxd`}
 {`# 1. Website wallet (easiest):
 #    Go to https://veloxdag.netlify.app/wallet → Access wallet → enter your address
 
-# 2. RPC query against the seed node:
+# 2. CLI (fastest):
+./bin/velox-wallet balance velx1YOUR_ADDRESS
+# Output: velx1YOUR_ADDRESS  50.00000000 VELX
+
+# 3. Raw RPC query:
 curl http://66.94.106.193:8545 \\
   -H "Content-Type: application/json" \\
-  -d '{"jsonrpc":"2.0","method":"getbalance","params":{"address":"velx1YOUR_ADDRESS"},"id":1}'
-
-# 3. CLI (if you have velox-wallet built):
-./bin/velox-wallet balance velx1YOUR_ADDRESS`}
+  -d '{"jsonrpc":"2.0","method":"getbalance","params":{"address":"velx1YOUR_ADDRESS"},"id":1}'`}
       </pre>
 
       {/* ── Run your own node ── */}
@@ -234,8 +235,7 @@ curl http://66.94.106.193:8545 \\
       <h2>Tips for maximum earnings</h2>
       <ul>
         <li>
-          Set <code>-threads</code> to your CPU core count — use <code>nproc</code> on Linux /
-          macOS, <code>echo %NUMBER_OF_PROCESSORS%</code> on Windows
+          Set <code>-threads</code> to your CPU core count — Linux: <code>$(nproc)</code>, macOS: <code>$(sysctl -n hw.ncpu)</code>, Windows: <code>echo %NUMBER_OF_PROCESSORS%</code>
         </li>
         <li>
           Mine on a VPS 24/7 — cloud servers have stable internet and uptime; even a $5/month
