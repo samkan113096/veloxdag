@@ -161,7 +161,7 @@ go build -o bin/veloxd ./cmd/veloxd`}
       <p>Three ways to check how much VELX you&apos;ve earned:</p>
       <pre className="bg-slate-900 p-4 rounded-lg overflow-x-auto text-sm text-cyan-200">
 {`# 1. Website wallet (easiest):
-#    Go to https://veloxdag.netlify.app/wallet → Access wallet → enter your address
+#    Go to https://veloxdag.xyz/wallet → Access wallet → enter your address
 
 # 2. CLI (fastest):
 ./bin/velox-wallet balance velx1YOUR_ADDRESS

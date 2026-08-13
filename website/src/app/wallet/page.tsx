@@ -236,7 +236,7 @@ export default function WalletPage() {
 
       const txPayload = { from: keypair.address, to, amount: satoshi, fee: feeSatoshi, nonce, timestamp };
       const signature = await signTx(txPayload, keypair.privateKeyHex);
-      const tx = { ...txPayload, signature };
+      const tx = { ...txPayload, publicKey: keypair.publicKeyHex, signature };
 
       const res = await fetch(base.replace(/\/$/, ""), {
         method: "POST",

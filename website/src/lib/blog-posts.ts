@@ -37,7 +37,7 @@ VeloxDAG combines fair launch ethics with BlockDAG architecture — multiple par
 
 **BlockDAG breaks the queue.** Blocks reference multiple parents, forming a directed acyclic graph of confirmed work. Miners don't fight for a single slot — they extend the DAG wherever they see valid tips.
 
-VeloxDAG targets ~10 second block intervals with up to two parents per block. The result: higher effective throughput, faster confirmation for users, and a network that *scales with miner participation* instead of fighting it.
+VeloxDAG targets ~60 second block intervals with up to two parents per block. The result: higher effective throughput, faster confirmation for users, and a network that *scales with miner participation* instead of fighting it.
 
 Projects like Kaspa proved the market hunger for fast PoW. BlockDAG took it mainstream. VeloxDAG delivers the same narrative with a **clean fair-launch slate** — no legacy premine baggage.
 

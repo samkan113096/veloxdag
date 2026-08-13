@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CHAIN="$ROOT/chain"
 DATADIR=$(mktemp -d)
 PORT=$((18000 + RANDOM % 1000))
-MINER="velx1audittest00000000000000000000000"
+MINER="velx10000000000000000000000000000000000000000"
 
 cleanup() {
   pkill -f "veloxd -datadir $DATADIR" 2>/dev/null || true
