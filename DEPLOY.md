@@ -1,7 +1,9 @@
-# VeloxDAG — Deployment Guide & Credentials
+# VeloxDAG — Deployment Guide
 
-> Keep this file private. Contains all server credentials, DNS settings, and
-> step-by-step instructions for every component.
+> ⚠️ **Do not store real credentials in this file.** This repository may be
+> public. Keep passwords, SSH keys, and API tokens in a password manager or
+> environment secrets instead. If a real secret has ever been committed here,
+> rotate it immediately (see "Security — rotate before launch" below).
 
 ---
 
@@ -21,7 +23,7 @@ That's it. The chain resumes from where it left off.
 |---|---|
 | VPS IP | `66.94.106.193` |
 | VPS SSH user | `root` |
-| VPS SSH password | `REDACTED` |
+| VPS SSH auth | **SSH key (recommended)** — store in password manager, NOT here |
 | VPS OS | Ubuntu 22.04 |
 | Chain data dir | `/var/lib/veloxdag/` (chain.json saved here) |
 | Node binary | `/opt/veloxdag/chain/bin/veloxd` |
@@ -40,15 +42,25 @@ That's it. The chain resumes from where it left off.
 ### Start (launch day)
 
 ```bash
-ssh root@66.94.106.193
-# password: REDACTED
+ssh root@66.94.106.193   # authenticate with your SSH key
 
 sudo systemctl start veloxdag
 sudo systemctl enable veloxdag   # auto-restart on reboot
 ```
 
-The node resumes from block ~3,786. No chain reset. Miners worldwide can
-connect immediately after start.
+> **IMPORTANT — consensus upgrade requires a fresh genesis.** The August 2026
+> security hardening changed consensus rules (signature verification, block
+> height/timestamp validation). Any node running the old binary or old chain
+> data is incompatible. Before starting, deploy the new binary and reset the
+> chain once:
+
+```bash
+sudo systemctl stop veloxdag
+rm -f /var/lib/veloxdag/chain.json
+sudo systemctl start veloxdag
+```
+
+The node starts from genesis (0 premine, 0 supply) and miners can connect immediately.
 
 ### Verify it's running
 
@@ -85,7 +97,7 @@ git push origin main
 ```
 
 Netlify detects the push and rebuilds automatically (takes ~2 min).
-Live at: **https://veloxdag.netlify.app**
+Live at: **https://veloxdag.xyz** (Netlify: `veloxdag.netlify.app`)
 
 ### Manual redeploy (no code changes)
 
@@ -110,17 +122,17 @@ To check / update:
 
 ## Part 3 — Custom Domain (Namecheap → Netlify)
 
-When you're ready to use your own domain (e.g. `veloxdag.com`):
+The canonical domain is **`veloxdag.xyz`**. If it's not yet connected:
 
 ### Step 1 — Add the domain in Netlify
 
 1. Netlify dashboard → **Domain settings → Add custom domain**
-2. Type your domain (e.g. `veloxdag.com`) → Verify → Add domain
+2. Type `veloxdag.xyz` → Verify → Add domain
 3. Netlify will show you DNS records to add
 
 ### Step 2 — Update DNS in Namecheap
 
-1. Login to Namecheap → **Domain List → Manage** your domain
+1. Login to Namecheap → **Domain List → Manage** `veloxdag.xyz`
 2. Go to **Advanced DNS**
 3. Add these records (Netlify will give you the exact values):
 
@@ -239,8 +251,9 @@ ssh root@66.94.106.193 'systemctl restart veloxdag'
 
 ## Part 8 — Full Launch Day Checklist
 
-- [ ] `ssh root@66.94.106.193` → `systemctl start veloxdag && systemctl enable veloxdag`
-- [ ] Visit `https://veloxdag.netlify.app` — live stats should appear within 10s
+- [ ] Deploy the **new** binary to the VPS and **re-genesis** (`rm -f /var/lib/veloxdag/chain.json`)
+- [ ] `ssh root@66.94.106.193` → `systemctl restart veloxdag && systemctl enable veloxdag`
+- [ ] Visit `https://veloxdag.xyz` — live stats should appear within 10s
 - [ ] Visit `/wallet` — create a wallet, check balance
 - [ ] (Optional) Point custom domain in Namecheap → Netlify
 - [ ] Announce on Twitter / Telegram — share the mining tutorial link
@@ -254,10 +267,25 @@ ssh root@66.94.106.193 'systemctl restart veloxdag'
 |---|---|
 | Live stats show "Error" | VPS node is stopped → `systemctl start veloxdag` |
 | Wallet shows 0 balance | Node is stopped — balance queries go through the Netlify proxy to the VPS |
-| `Permission denied` on SSH | Use password `REDACTED` or add your SSH public key |
+| `Permission denied` on SSH | Add your SSH public key (or use the password stored in your password manager) |
 | Miner can't connect | Check firewall: `ufw status` on VPS; ports 8545 + 37373 must be open |
 | Website not updating | Push to GitHub main branch or manually trigger deploy in Netlify |
 | Chain data lost | Restore from backup: `scp backup.json root@66.94.106.193:/var/lib/veloxdag/chain.json` |
+
+---
+
+## Security — rotate before launch
+
+Because a real password was previously committed to this repository's history,
+assume it is compromised and rotate everything:
+
+1. **Rotate the VPS root password** — `passwd` on the VPS, or better, disable
+   password auth entirely and use SSH keys only.
+2. **Rotate the GitHub token** — a personal access token was embedded in the
+   local `git remote`. Revoke it at GitHub → Settings → Developer settings →
+   Personal access tokens, then switch the remote to SSH or a fresh token.
+3. **Consider** rewriting git history (`git filter-repo`/BFG) to purge the old
+   secret from past commits if the repo is or ever was public.
 
 ---
 

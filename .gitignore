@@ -2,7 +2,8 @@ node_modules/
 website/.next/
 website/out/
 
-# Netlify build cache — auto-generated, not source
+# Netlify local CLI state — auto-generated, not source
+.netlify/
 website/.netlify/
 
 # Chain data — NEVER commit
