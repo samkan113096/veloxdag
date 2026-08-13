@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/veloxdag/veloxdag/pkg/crypto"
 	"github.com/veloxdag/veloxdag/pkg/pow"
 	"github.com/veloxdag/veloxdag/pkg/types"
 )
@@ -25,6 +26,9 @@ func main() {
 	if *miner == "" {
 		fmt.Println("Usage: velox-miner -miner velx1... [-rpc URL] [-threads N]")
 		os.Exit(1)
+	}
+	if !crypto.ValidateAddress(*miner) {
+		log.Fatalf("invalid miner address %q — must be a valid velx1… address", *miner)
 	}
 
 	log.Printf("VeloxDAG CPU Miner — %d threads", *threads)

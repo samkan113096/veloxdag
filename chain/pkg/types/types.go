@@ -48,18 +48,27 @@ type Transaction struct {
 	Fee       uint64 `json:"fee"`
 	Nonce     uint64 `json:"nonce"`
 	Timestamp int64  `json:"timestamp"`
+	PublicKey string `json:"publicKey"`
 	Signature string `json:"signature"`
 }
 
-func (tx *Transaction) ID() string {
+// SigningMessage returns the canonical bytes that a sender signs.
+// The browser wallet signs SHA-256 of JSON.stringify({from,to,amount,fee,nonce,timestamp}),
+// so this struct must keep that exact field set and ordering.
+func (tx *Transaction) SigningMessage() []byte {
 	b, _ := json.Marshal(struct {
-		From   string
-		To     string
-		Amount uint64
-		Fee    uint64
-		Nonce  uint64
-	}{tx.From, tx.To, tx.Amount, tx.Fee, tx.Nonce})
-	sum := sha256.Sum256(b)
+		From      string `json:"from"`
+		To        string `json:"to"`
+		Amount    uint64 `json:"amount"`
+		Fee       uint64 `json:"fee"`
+		Nonce     uint64 `json:"nonce"`
+		Timestamp int64  `json:"timestamp"`
+	}{tx.From, tx.To, tx.Amount, tx.Fee, tx.Nonce, tx.Timestamp})
+	return b
+}
+
+func (tx *Transaction) ID() string {
+	sum := sha256.Sum256(tx.SigningMessage())
 	return hex.EncodeToString(sum[:])
 }
 

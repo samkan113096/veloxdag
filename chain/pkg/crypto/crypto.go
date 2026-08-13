@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+
+	"github.com/veloxdag/veloxdag/pkg/types"
 )
 
 const AddressPrefix = "velx1"
@@ -70,4 +72,39 @@ func ValidateAddress(addr string) bool {
 	}
 	_, err := hex.DecodeString(addr[len(AddressPrefix):])
 	return err == nil && len(addr) == len(AddressPrefix)+40
+}
+
+// VerifyTx cryptographically validates a transaction: the sender must be a
+// well-formed address, the embedded public key must hash to that address, and
+// the signature must verify over the canonical signing message. This closes
+// both the "empty sender mints coins" and "anyone can spend any address" holes.
+func VerifyTx(tx *types.Transaction) error {
+	if tx == nil {
+		return fmt.Errorf("nil transaction")
+	}
+	if tx.From == "" {
+		return fmt.Errorf("transaction missing sender")
+	}
+	if !ValidateAddress(tx.From) {
+		return fmt.Errorf("invalid sender address")
+	}
+	if !ValidateAddress(tx.To) {
+		return fmt.Errorf("invalid recipient address")
+	}
+	pub, err := hex.DecodeString(tx.PublicKey)
+	if err != nil || len(pub) != ed25519.PublicKeySize {
+		return fmt.Errorf("invalid public key")
+	}
+	if PubKeyToAddress(pub) != tx.From {
+		return fmt.Errorf("public key does not match sender")
+	}
+	sig, err := hex.DecodeString(tx.Signature)
+	if err != nil || len(sig) != ed25519.SignatureSize {
+		return fmt.Errorf("invalid signature encoding")
+	}
+	msgHash := sha256.Sum256(tx.SigningMessage())
+	if !ed25519.Verify(pub, msgHash[:], sig) {
+		return fmt.Errorf("invalid signature")
+	}
+	return nil
 }

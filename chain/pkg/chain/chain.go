@@ -10,6 +10,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/veloxdag/veloxdag/pkg/crypto"
 	"github.com/veloxdag/veloxdag/pkg/pow"
 	"github.com/veloxdag/veloxdag/pkg/types"
 )
@@ -24,6 +25,10 @@ const (
 	GenesisDifficulty = 1
 
 	MaxMempool = 5000
+
+	// MaxTxsPerBlock bounds block size so a miner can't bloat the ledger or
+	// force other nodes to validate an unbounded transaction list.
+	MaxTxsPerBlock = 100
 )
 
 type State struct {
@@ -179,21 +184,35 @@ func (s *State) AddTx(tx types.Transaction) error {
 	if len(s.Mempool) >= MaxMempool {
 		return fmt.Errorf("mempool full")
 	}
+	if err := crypto.VerifyTx(&tx); err != nil {
+		return err
+	}
 	if tx.Amount == 0 && tx.Fee == 0 {
 		return fmt.Errorf("invalid tx")
 	}
-	bal := s.Balances[tx.From]
-	need := tx.Amount + tx.Fee
-	if tx.From != "" && bal < need {
-		return fmt.Errorf("insufficient balance")
+	if tx.Nonce != s.Nonces[tx.From] {
+		return fmt.Errorf("invalid nonce: expected %d", s.Nonces[tx.From])
 	}
+	// Available balance = on-chain balance minus pending mempool debits from the
+	// same sender. Without this, a sender could queue a series of txs that each
+	// pass the balance check individually but overdraw in aggregate, poisoning
+	// every block template a miner builds.
+	bal := s.Balances[tx.From]
 	for _, m := range s.Mempool {
-		if m.From == tx.From && m.Nonce == tx.Nonce {
-			return fmt.Errorf("duplicate nonce in mempool")
+		if m.From == tx.From {
+			if m.Nonce == tx.Nonce {
+				return fmt.Errorf("duplicate nonce in mempool")
+			}
+			if bal >= m.Amount+m.Fee {
+				bal -= m.Amount + m.Fee
+			} else {
+				bal = 0
+				break
+			}
 		}
 	}
-	if tx.From != "" && tx.Nonce != s.Nonces[tx.From] {
-		return fmt.Errorf("invalid nonce: expected %d", s.Nonces[tx.From])
+	if bal < tx.Amount+tx.Fee {
+		return fmt.Errorf("insufficient balance")
 	}
 	s.Mempool = append(s.Mempool, tx)
 	return nil
@@ -263,14 +282,68 @@ func (s *State) SubmitBlock(block *types.Block) error {
 	if got := merkleRoot(block.Transactions); got != h.MerkleRoot {
 		return fmt.Errorf("merkle root mismatch: got %s want %s", got, h.MerkleRoot)
 	}
+	if len(block.Transactions) > MaxTxsPerBlock {
+		return fmt.Errorf("too many transactions: %d (max %d)", len(block.Transactions), MaxTxsPerBlock)
+	}
 
-	for _, p := range block.Header.Parents {
-		if _, ok := s.Blocks[p]; !ok {
+	if !crypto.ValidateAddress(h.Miner) {
+		return fmt.Errorf("invalid miner address")
+	}
+	if len(h.Parents) == 0 || len(h.Parents) > types.MaxParents {
+		return fmt.Errorf("invalid parent count %d", len(h.Parents))
+	}
+
+	// Parents must exist; derive expected height and earliest timestamp from them.
+	var maxParentHeight uint64
+	var maxParentTime int64
+	for _, p := range h.Parents {
+		parent, ok := s.Blocks[p]
+		if !ok {
 			return fmt.Errorf("unknown parent %s", p)
 		}
+		if parent.Header.Height > maxParentHeight {
+			maxParentHeight = parent.Header.Height
+		}
+		if parent.Header.Timestamp > maxParentTime {
+			maxParentTime = parent.Header.Timestamp
+		}
+	}
+	if h.Height != maxParentHeight+1 {
+		return fmt.Errorf("invalid height %d, expected %d", h.Height, maxParentHeight+1)
+	}
+	if h.Timestamp < maxParentTime {
+		return fmt.Errorf("block timestamp %d before parent %d", h.Timestamp, maxParentTime)
+	}
+	if h.Timestamp > types.Now()+7200 {
+		return fmt.Errorf("block timestamp too far in the future")
 	}
 	if _, exists := s.Blocks[block.Hash]; exists {
 		return fmt.Errorf("block already known")
+	}
+
+	// Validate every transaction before mutating any state. Any invalid
+	// transaction rejects the entire block (no silent dropping).
+	applied := make(map[string]bool)
+	nextNonce := make(map[string]uint64)
+	for _, tx := range block.Transactions {
+		if err := crypto.VerifyTx(&tx); err != nil {
+			return fmt.Errorf("invalid transaction: %v", err)
+		}
+		if applied[tx.ID()] {
+			return fmt.Errorf("duplicate transaction in block")
+		}
+		expected := s.Nonces[tx.From]
+		if n, ok := nextNonce[tx.From]; ok {
+			expected = n
+		}
+		if tx.Nonce != expected {
+			return fmt.Errorf("invalid nonce for %s: got %d want %d", tx.From, tx.Nonce, expected)
+		}
+		if need := tx.Amount + tx.Fee; s.Balances[tx.From] < need {
+			return fmt.Errorf("insufficient balance for %s", tx.From)
+		}
+		nextNonce[tx.From] = expected + 1
+		applied[tx.ID()] = true
 	}
 
 	// Coinbase (BTC-style halving by height)
@@ -283,22 +356,14 @@ func (s *State) SubmitBlock(block *types.Block) error {
 		s.TotalSupply += reward
 	}
 
-	// Apply txs
-	applied := make(map[string]bool)
+	// Apply validated transactions.
 	for _, tx := range block.Transactions {
-		if tx.From != "" {
-			need := tx.Amount + tx.Fee
-			if s.Balances[tx.From] < need {
-				continue
-			}
-			s.Balances[tx.From] -= need
-			s.Nonces[tx.From]++
-		}
+		s.Balances[tx.From] -= tx.Amount + tx.Fee
+		s.Nonces[tx.From]++
 		s.Balances[tx.To] += tx.Amount
-		if tx.Fee > 0 && tx.From != "" {
+		if tx.Fee > 0 {
 			s.Balances[block.Header.Miner] += tx.Fee
 		}
-		applied[tx.ID()] = true
 	}
 
 	// Remove mined txs from mempool
@@ -422,17 +487,29 @@ func (s *State) GetGenesisHash() string {
 func (s *State) GetBlocksFromHeight(from uint64, limit int) []json.RawMessage {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	out := []json.RawMessage{}
+	type indexed struct {
+		height uint64
+		raw    json.RawMessage
+	}
+	var all []indexed
 	for _, b := range s.Blocks {
 		if b.Header.Height >= from {
 			raw, err := json.Marshal(b)
 			if err == nil {
-				out = append(out, raw)
+				all = append(all, indexed{b.Header.Height, raw})
 			}
 		}
-		if len(out) >= limit {
-			break
-		}
+	}
+	// Blocks MUST be served in ascending height order so a syncing peer sees
+	// every parent before its children. Map iteration order is random, which
+	// previously caused out-of-order delivery and rejected syncs.
+	sort.Slice(all, func(i, j int) bool { return all[i].height < all[j].height })
+	if limit > 0 && len(all) > limit {
+		all = all[:limit]
+	}
+	out := make([]json.RawMessage, len(all))
+	for i, b := range all {
+		out[i] = b.raw
 	}
 	return out
 }

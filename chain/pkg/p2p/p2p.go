@@ -319,9 +319,12 @@ func (n *Node) syncLoop() {
 	for range ticker.C {
 		n.mu.RLock()
 		for _, peer := range n.peers {
-			if peer.height > n.chain.GetBlockCount() {
-				n.requestBlocks(peer, n.chain.GetBlockCount())
-			}
+			// Always request the next block window. Peers that aren't ahead
+			// simply respond with zero blocks, so this is cheap and also covers
+			// the case where a gossip message was missed. peer.height is only
+			// set at handshake time, so relying on it alone would never catch
+			// up after a missed block.
+			n.requestBlocks(peer, n.chain.GetBlockCount())
 			// Exchange peer lists
 			_ = peer.Send(Message{Type: MsgGetPeers})
 		}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/veloxdag/veloxdag/pkg/chain"
+	"github.com/veloxdag/veloxdag/pkg/crypto"
 	"github.com/veloxdag/veloxdag/pkg/p2p"
 	"github.com/veloxdag/veloxdag/pkg/pow"
 	"github.com/veloxdag/veloxdag/pkg/types"
@@ -133,6 +134,10 @@ func (s *Server) getBlockTemplate(w http.ResponseWriter, req jsonRPCReq) {
 	_ = json.Unmarshal(req.Params, &p)
 	if p.Miner == "" {
 		writeErr(w, req.ID, -32602, "miner address required")
+		return
+	}
+	if !crypto.ValidateAddress(p.Miner) {
+		writeErr(w, req.ID, -32602, "invalid miner address")
 		return
 	}
 	block, prefix, err := s.State.BuildBlockTemplate(p.Miner)
