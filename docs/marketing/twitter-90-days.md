@@ -1,5 +1,5 @@
 # VeloxDAG — 90-Day Twitter Calendar
-Fair-launch PoW BlockDAG · VELX · https://veloxdag.com
+Fair-launch PoW BlockDAG · VELX · https://veloxdag.xyz
 ---
 ## Day 1 (2026-05-26)
 VeloxDAG mainnet prep is live. Zero premine. Zero ICO. 100% PoW. If you missed fair-launch energy in 2021, this is your second shot — with BlockDAG throughput.
@@ -34,7 +34,7 @@ Security starts at the wallet: back up wallet_*.json offline. Never paste your p
 #CryptoSecurity #VeloxDAG
 
 ## Day 9 (2026-06-03)
-Mainnet countdown: wallet ✓ node ✓ miner built ✓ Read the checklist at veloxdag.com/tutorial
+Mainnet countdown: wallet ✓ node ✓ miner built ✓ Read the checklist at veloxdag.xyz/tutorial
 #Mainnet #VeloxDAG
 
 ## Day 10 (2026-06-04)
@@ -74,7 +74,7 @@ Pool vs solo at launch: we recommend solo to strengthen the mesh. Pools come lat
 #Mining #Solo
 
 ## Day 19 (2026-06-13)
-VELX supply question? 100% block rewards. No stealth mint function. Read the litepaper on veloxdag.com
+VELX supply question? 100% block rewards. No stealth mint function. Read the litepaper on veloxdag.xyz
 #Tokenomics #VELX
 
 ## Day 20 (2026-06-14)
@@ -134,7 +134,7 @@ VELX isn't airdropped to influencers. Want tokens? Mine or buy from a miner. Tha
 #FairLaunch
 
 ## Day 34 (2026-06-28)
-Joseph Chen, Lead Protocol Engineer, ships mainnet-grade PoW — and mines VELX like everyone else. Team page: veloxdag.com/team
+Sam Kan, Lead Protocol Engineer, ships mainnet-grade PoW — and mines VELX like everyone else. Team page: veloxdag.xyz/team
 #VeloxDAG #BuildInPublic
 
 ## Day 35 (2026-06-29)
@@ -194,7 +194,7 @@ Mining on laptop? Possible for testing. For production hash, desktop or VPS with
 #MiningTips
 
 ## Day 49 (2026-07-13)
-veloxdag.com/blog — fair launch essays, KAS comparisons, pool guides. Bookmarks matter.
+veloxdag.xyz/blog — fair launch essays, KAS comparisons, pool guides. Bookmarks matter.
 #VeloxDAG
 
 ## Day 50 (2026-07-14)
@@ -338,7 +338,7 @@ KAS fam welcome: same PoW religion, new fair chain. Respect the hash.
 #Kaspa
 
 ## Day 85 (2026-08-18)
-Week 1 security: don't chase 'support' DMs. Official links only on veloxdag.com
+Week 1 security: don't chase 'support' DMs. Official links only on veloxdag.xyz
 #ScamAlert
 
 ## Day 86 (2026-08-19)

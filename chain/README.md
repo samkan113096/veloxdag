@@ -110,6 +110,6 @@ curl -s http://127.0.0.1:8545 -H "Content-Type: application/json" \
 
 ## Project Links
 
-- Website: https://veloxdag.com (configure your domain)
+- Website: https://veloxdag.xyz
 - Litepaper: `/docs/litepaper/VELOXDAG-LITEPAPER.md`
-- Mining guide: https://veloxdag.com/tutorial
+- Mining guide: https://veloxdag.xyz/tutorial

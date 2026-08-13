@@ -1,6 +1,6 @@
 # VeloxDAG Quick Audit Report
 
-**Date:** 2026-05-26  
+**Date:** 2026-08-12 (updated)  
 **Scope:** Chain (`chain/`), Website (`website/`), Docs (`docs/`)  
 **Auditor:** Automated review + unit/integration tests
 
@@ -12,13 +12,49 @@
 |------|--------|-------|
 | Go build | ✅ PASS | `veloxd`, `velox-miner`, `velox-wallet` compile clean |
 | Go vet | ✅ PASS | No issues |
-| Unit tests | ✅ PASS | 6 tests — genesis, mining, persistence, PoW reject |
-| Website build | ✅ PASS | 33 static pages generated |
+| Unit tests | ✅ PASS | 13 tests — genesis, mining, persistence, PoW/sig/height/timestamp/mint/overdraw/cap |
+| Website build | ✅ PASS | 34 static pages generated |
 | Fair launch | ✅ VERIFIED | Genesis supply = 0, no coinbase at genesis |
+| Signature interop | ✅ VERIFIED | `@noble/ed25519` browser sigs verify with Go `crypto/ed25519` |
+| End-to-end | ✅ VERIFIED | `verify-local.sh` mines a block and persists balance |
 | Blog posts | ✅ 20/20 | All slugs generate static pages |
 | Social calendar | ✅ 90/90 | Twitter + Telegram |
-| Litepaper | ✅ 22 sections | ~8,480 words |
+| Litepaper | ✅ 22 sections | Synced with shipped code |
 | Email templates | ✅ 9 templates | |
+
+---
+
+## Security Hardening — 2026-08-12
+
+The following consensus-critical vulnerabilities were fixed before launch. **These changes alter consensus rules, so any existing `chain.json` state must be deleted (re-genesis) before the network goes live.**
+
+### Fixed
+
+1. **Unbounded mint via empty sender (`CRITICAL`)** — `SubmitBlock` credited `tx.To` even when `tx.From` was empty, letting any miner mint arbitrary VELX and break the 21M cap. **Fixed:** every transaction requires a valid, signature-bound sender; empty-sender txs are rejected in both the mempool and blocks.
+
+2. **No transaction signature verification (`CRITICAL`)** — the `Signature` field existed but was never checked, so anyone could spend any address via `sendrawtransaction`. **Fixed:** `crypto.VerifyTx` verifies (a) sender/recipient addresses are well-formed, (b) the embedded `PublicKey` hashes to the sender address, and (c) the Ed25519 signature verifies over the canonical signing message. Enforced in both `AddTx` and `SubmitBlock`.
+
+3. **Unvalidated block height (`HIGH`)** — a block could claim any `height`, bypassing the halving/emission schedule. **Fixed:** height must equal the maximum parent height + 1.
+
+4. **Unvalidated block timestamp (`HIGH`)** — miner-controlled timestamps could game difficulty retargeting. **Fixed:** block timestamps must be ≥ the newest parent and ≤ now + 2h.
+
+5. **Invalid txs silently dropped (`MEDIUM`)** — `SubmitBlock` skipped insufficient-balance txs with `continue` instead of rejecting the block. **Fixed:** any invalid transaction rejects the entire block.
+
+6. **Mempool aggregate overdraw (`MEDIUM`)** — a sender could queue multiple txs that each passed the balance check individually but overdraw in aggregate, poisoning every block template. **Fixed:** `AddTx` debits pending mempool txs from the same sender before validating the next.
+
+7. **Unbounded block size (`MEDIUM`)** — a miner could stuff arbitrary txs into a block. **Fixed:** `MaxTxsPerBlock = 100` enforced in `SubmitBlock`.
+
+8. **P2P sync delivered blocks out of order (`HIGH`)** — `GetBlocksFromHeight` iterated a Go map (random order), so a syncing peer received children before parents and rejected them, breaking new-node sync. **Fixed:** blocks are now served in ascending height order; the periodic sync loop re-requests from all peers so missed gossip is recovered.
+
+9. **Public RPC proxy exposed mining/peer methods (`HIGH`)** — the Netlify function forwarded every RPC method, including `submitblock`/`getblocktemplate`/`addpeer`. **Fixed:** an allowlist now permits only read methods + `sendrawtransaction`.
+
+### Deployment note
+
+Consensus changes require a fresh genesis. On the VPS node (and any local node), run:
+
+```bash
+rm -f ~/.veloxdag/chain.json   # then restart the node
+```
 
 ---
 
@@ -40,12 +76,12 @@
 
 | ID | Severity | Issue | Recommendation |
 |----|----------|-------|----------------|
-| A1 | **High** | No P2P networking — nodes don't sync with each other | Add libp2p or custom peer gossip before public mainnet |
-| A2 | **High** | RPC has no authentication — binds `0.0.0.0:8545` by default | Bind `127.0.0.1` only; add API key for public nodes |
-| A3 | **High** | Transactions not cryptographically verified | Verify Ed25519 signatures in `AddTx` before mainnet |
+| A1 | ~~High~~ Fixed | ~~No P2P networking~~ | Added `pkg/p2p` gossip layer (port 37373) |
+| A2 | **Medium** | RPC has no authentication (binds `127.0.0.1` by default; `-lan` opens `0.0.0.0`) | Add API key for public nodes; Netlify proxy now method-allowlisted |
+| A3 | ~~High~~ Fixed | ~~Transactions not cryptographically verified~~ | `crypto.VerifyTx` enforces Ed25519 signatures in `AddTx` + `SubmitBlock` |
 | A4 | **Medium** | Mempool not persisted (`json:"-"`) | Persist mempool or document restart behavior |
-| A5 | **Medium** | Low initial difficulty (4) — easy to grind blocks | Expected for CPU launch; increase via retarget as hash joins |
-| A6 | **Medium** | No block size / weight limits beyond 100 tx cap | Add max block bytes |
+| A5 | ~~Medium~~ Fixed | ~~Low initial difficulty~~ | Initial difficulty is 50,000,000 (calibrated for ~60s CPU blocks) |
+| A6 | ~~Medium~~ Fixed | ~~No block size / weight limits~~ | `MaxTxsPerBlock = 100` enforced in `SubmitBlock` |
 | A7 | **Medium** | DAG ordering simplified — no full GHOST consensus | Document as v1; plan proper ordering for production |
 | A8 | **Low** | `chain.json` world-readable (0644) | Use 0600 for wallet/chain data |
 | A9 | **Low** | No rate limiting on RPC | Add per-IP limits on public endpoints |
@@ -92,7 +128,7 @@ Confirmed by `TestGenesisFairLaunch` and `getchaininfo` returning `"fairLaunch":
 
 ## Team Section
 
-Joseph Chen profile sourced from public site [josephchendev.com](http://josephchendev.com/). **Action:** Confirm consent before public launch.
+Sam Kan (Lead Protocol & Security Engineer) is listed on the site team page and in the litepaper. No personal website, GitHub, or email links are published, matching the privacy-first presentation.
 
 ---
 

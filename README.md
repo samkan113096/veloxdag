@@ -3,7 +3,7 @@
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](#)
 [![License](https://img.shields.io/badge/license-MIT-blue)](#)
 [![Premine](https://img.shields.io/badge/premine-0%25-success)](#)
-[![Website](https://img.shields.io/badge/website-veloxdag.netlify.app-cyan)](https://veloxdag.netlify.app)
+[![Website](https://img.shields.io/badge/website-veloxdag.xyz-cyan)](https://veloxdag.xyz)
 
 > **The fastest fair-launch Proof-of-Work BlockDAG. No premine. No ICO. No VC. Mine VELX and own the chain.**
 
@@ -111,7 +111,7 @@ Reward reaches zero after 64 halvings. All supply is earned through mining.
 cd website && npm install && npm run dev
 ```
 
-Live at **https://veloxdag.netlify.app** — includes:
+Live at **https://veloxdag.xyz** — includes:
 - Live network stats (updates every 5s via Netlify proxy → VPS node)
 - Browser web wallet (create seed phrase, send/receive VELX, check balance)
 - 20 blog posts, litepaper, mining tutorial, team

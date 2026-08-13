@@ -11,14 +11,15 @@
 | **Ticker** | VELX |
 | **Consensus** | Proof-of-Work (SHA-256 double hash) |
 | **Architecture** | BlockDAG (up to 2 parents per block) |
-| **Block Reward** | 50 VELX (initial, fixed at launch) |
+| **Block Reward** | 50 VELX initial, halving every 210,000 blocks |
+| **Max Supply** | 21,000,000 VELX |
 | **Premine** | 0% |
 | **ICO / VC** | None |
 | **Launch Mining** | CPU-friendly at genesis |
-| **Target Block Interval** | ~10 seconds |
+| **Target Block Interval** | ~60 seconds |
 | **Decimals** | 8 |
-| **Website** | [https://veloxdag.com](https://veloxdag.com) |
-| **Repository** | [https://github.com/veloxdag](https://github.com/veloxdag) |
+| **Website** | [https://veloxdag.xyz](https://veloxdag.xyz) |
+| **Repository** | [https://github.com/samkan113096/veloxdag](https://github.com/samkan113096/veloxdag) |
 
 ---
 
@@ -53,9 +54,9 @@
 
 VeloxDAG is a fair-launch, Proof-of-Work BlockDAG blockchain that issues its native asset **VELX** exclusively through mining. There is no premine, no initial coin offering, no venture capital allocation, and no genesis insider distribution. The network combines the throughput advantages of directed acyclic graph (DAG) block structures with the credibility and permissionless participation model that made early Bitcoin and modern Kaspa communities so durable.
 
-At launch, VeloxDAG pays **50 VELX** per successfully mined block to the miner address embedded in the block header. Consensus security is anchored in **double SHA-256** proof-of-work—the same family of hash functions used by Bitcoin—adapted for parallel block production in a BlockDAG. Blocks may reference up to **two parents**, enabling multiple miners to extend the ledger simultaneously rather than competing for a single linear chain tip.
+At launch, VeloxDAG pays **50 VELX** per successfully mined block to the miner address embedded in the block header, halving every 210,000 blocks toward a hard cap of **21,000,000 VELX**. Consensus security is anchored in **double SHA-256** proof-of-work—the same family of hash functions used by Bitcoin—adapted for parallel block production in a BlockDAG. Blocks may reference up to **two parents**, enabling multiple miners to extend the ledger simultaneously rather than competing for a single linear chain tip.
 
-VeloxDAG targets approximately **ten-second** block intervals and is engineered for **CPU mining at launch**, lowering the barrier to entry for solo miners, hobbyists, and geographically distributed participants who were priced out of ASIC-dominated networks. The project is open source, with reference implementations for a full node (`veloxd`), miner (`velox-miner`), and wallet (`velox-wallet`).
+VeloxDAG targets approximately **60-second** block intervals and is engineered for **CPU mining at launch**, lowering the barrier to entry for solo miners, hobbyists, and geographically distributed participants who were priced out of ASIC-dominated networks. The project is open source, with reference implementations for a full node (`veloxd`), miner (`velox-miner`), and wallet (`velox-wallet`).
 
 This litepaper presents the economic thesis, architectural rationale, security assumptions, technical parameters, and community roadmap for VeloxDAG. It is intended for miners, developers, researchers, and participants evaluating whether to run infrastructure, build applications, or hold VELX as a purely earned asset. VeloxDAG does not promise returns; it promises **rules**—transparent, verifiable, and aligned with miners from block one.
 
@@ -143,7 +144,7 @@ A blockchain, strictly speaking, is a chain: each block has one parent (except g
 
 ### 5.1 Why a DAG?
 
-In a linear chain, two miners who find blocks at the same height force a fork; one branch becomes stale. In a DAG, both blocks may remain **compatible** if they reference consistent history and pass consensus rules. Parallelism increases **effective block rate** and reduces the percent of hash power wasted on orphans—especially when target intervals are short (~10 seconds).
+In a linear chain, two miners who find blocks at the same height force a fork; one branch becomes stale. In a DAG, both blocks may remain **compatible** if they reference consistent history and pass consensus rules. Parallelism increases **effective block rate** and reduces the percent of hash power wasted on orphans—especially when target intervals are short (~60 seconds).
 
 ### 5.2 Tips and the DAG Frontier
 
@@ -161,7 +162,7 @@ Each block header includes a **Merkle root** over its transaction list. Blocks m
 
 ### 5.5 Throughput Narrative
 
-VeloxDAG does not claim unbounded TPS on day one. It claims **structural parallelism**: the network is not forced to wait for a single 10-minute slot. With ~10-second targets and two-parent references, aggregate inclusion capacity scales with **honest hash participation** and efficient block propagation—subject to bandwidth and validation costs on full nodes.
+VeloxDAG does not claim unbounded TPS on day one. It claims **structural parallelism**: the network is not forced to wait for a single 10-minute slot. With ~60-second targets and two-parent references, aggregate inclusion capacity scales with **honest hash participation** and efficient block propagation—subject to bandwidth and validation costs on full nodes.
 
 The BlockDAG is not a sidecar feature. It is the **primary ledger shape** of VeloxDAG—everything else (wallets, explorers, pools) indexes that graph.
 
@@ -196,28 +197,32 @@ This aligns VeloxDAG with the same cryptographic primitive family as Bitcoin, be
 
 ### 6.2 Difficulty Adjustment
 
-The reference node retargets on intervals of **30 blocks** (`RetargetInterval`). The launch heuristic examines **DAG tip count**:
+The reference node retargets every **2,016 blocks** (`RetargetBlocks`) — the same window cadence as Bitcoin. At the ~60-second target that is roughly **1.4 days** per window. The node compares actual elapsed seconds against the ideal (`RetargetBlocks × TargetBlockSec`) and scales difficulty proportionally:
 
-- If tips **exceed three**, difficulty **increases** (network is producing parallel blocks quickly).
-- If tips **equal one** and difficulty > 1, difficulty **decreases**.
+```
+newDiff = oldDiff × (expectedSec / actualSec)
+```
 
-This is a simplified retarget tuned for early networks with variable solo-miner participation. Future upgrades may incorporate sliding-window median block times toward the **10-second** design target (`TargetBlockSec`).
+The adjustment is clamped to **±4× per window** (identical to Bitcoin's clamp), preventing wild oscillations when hash rate spikes or collapses. Timestamps are validated per block (≥ newest parent, ≤ now + 2h) so retargeting cannot be gamed by arbitrarily fast or far-future timestamps.
 
 ### 6.3 Block Validity Rules
 
 A block is accepted if:
 
-- Proof-of-work verifies at declared difficulty.
+- Proof-of-work verifies at the declared difficulty.
+- Difficulty meets or exceeds the current chain difficulty.
 - All parent hashes exist in local state.
+- Height equals the maximum parent height + 1.
 - The block hash is not already known.
-- Coinbase pays exactly **50 VELX** to `header.miner` (protocol constant at launch).
-- Transactions do not double-spend available balances; fees flow to miner.
+- Coinbase pays exactly the schedule-defined reward to `header.miner`.
+- Every transaction is Ed25519-signature-verified and nonce-ordered; fees flow to the miner.
+- The transaction list hashes to the declared Merkle root and is within the per-block limit.
 
 Invalid blocks are rejected without penalty to the submitter beyond wasted work—standard PoW economics.
 
 ### 6.4 CPU Mining at Launch
 
-Initial difficulty is low (`InitialDifficulty = 4` in the reference implementation), enabling **consumer CPU** mining with `velox-miner` multithreading. This is intentional: VeloxDAG wants thousands of small miners before megawatt farms. ASIC resistance is not claimed as a permanent physics law—it is a **launch policy** that community governance may refine (e.g., algorithm rotation, increased memory hardness, or difficulty floors) if centralization appears.
+Initial difficulty (`InitialDifficulty = 50_000_000` in the reference implementation) is calibrated for ~60-second blocks on consumer hardware, enabling **CPU** mining with `velox-miner` multithreading. This is intentional: VeloxDAG wants thousands of small miners before megawatt farms. ASIC resistance is not claimed as a permanent physics law—it is a **launch policy** that community governance may refine (e.g., algorithm rotation, increased memory hardness, or difficulty floors) if centralization appears.
 
 ### 6.5 Why PoW for a “Fast” Chain
 
@@ -248,7 +253,7 @@ CPU launch does not imply CPU forever. If ASICs arrive, they do so without a pre
 | Team allocation | **None at genesis** |
 | Emission source | **100% coinbase + fees** |
 | Initial block reward | **50 VELX** |
-| Supply cap (launch client) | **Uncapped** (governance may propose caps) |
+| Supply cap | **21,000,000 VELX** (Bitcoin-style halving) |
 
 ### 7.1 Genesis Semantics
 
@@ -256,7 +261,7 @@ The genesis block embeds a public message: *“VeloxDAG Fair Launch — No Premi
 
 ### 7.2 Coinbase and Fees
 
-Each accepted block grants **50 VELX** (`50_00000000` base units, 8 decimals) to the miner address in the header. Transaction fees, if present, add to the miner’s balance and total supply tracker. There are no protocol-level burns at launch.
+Each accepted block grants the **schedule-defined reward** (initially **50 VELX** = `50_00000000` base units, 8 decimals) to the miner address in the header, halving every 210,000 blocks. Transaction fees, if present, add to the miner’s balance. The halving is enforced by block height in `types.BlockReward`, so no miner can claim a reward outside the schedule. There are no protocol-level burns at launch.
 
 ### 7.3 Economic Fairness Argument
 
@@ -297,32 +302,26 @@ There is no protocol treasury at genesis. Future community treasuries—if creat
 
 At mainnet launch, emission is:
 
-**Reward per block = 50 VELX**  
-**Block interval target ≈ 10 seconds**  
-**Parents per block ≤ 2**
+**Reward per block = 50 VELX (halving every 210,000 blocks)**  
+**Block interval target ≈ 60 seconds**  
+**Parents per block ≤ 2**  
+**Max supply = 21,000,000 VELX**
 
-Theoretical upper bound on coinbase issuance (if exactly one block every 10 seconds):
+Theoretical upper bound on coinbase issuance (if exactly one block every 60 seconds):
 
-- Per minute: up to ~300 VELX (6 blocks × 50)
-- Per day: ~432,000 VELX
-- Per year: ~157,680,000 VELX
+- Per minute: up to ~50 VELX (1 block × 50)
+- Per day: ~72,000 VELX
+- Per year: ~26,280,000 VELX (first halving period)
 
-In practice, early networks may produce **variable block rates** due to DAG parallelism and retarget dynamics—actual supply growth should be measured on-chain via `totalSupply` in node state, not spreadsheet ideals.
+The halving schedule caps total supply at 21,000,000 VELX. In practice, early networks may produce **variable block rates** due to DAG parallelism and retarget dynamics—actual supply growth should be measured on-chain via `totalSupply` in node state, not spreadsheet ideals.
 
 ### 8.2 Fees
 
-Transactions may attach fees to incentivize inclusion. Fees are **miner revenue** and increase tracked supply. At low congestion, fees may be minimal; as usage grows, fee markets complement block subsidies.
+Transactions may attach fees to incentivize inclusion. Fees are **miner revenue**. At low congestion, fees may be minimal; as usage grows, fee markets complement block subsidies.
 
-### 8.3 Long-Term Policy (Governance-Subject)
+### 8.3 Long-Term Policy
 
-Bitcoin popularized halving schedules. VeloxDAG launches with a **constant 50 VELX** subsidy for predictability during bootstrapping. Community governance may later adopt:
-
-- **Halving schedule** (e.g., every N blocks)
-- **Tail emission** for permanent security budget
-- **Fee-only tail** after subsidy sunset
-- **Hard cap** proposals (e.g., 21B VELX) with client fork coordination
-
-Any change requires social consensus and software adoption—VeloxDAG does not pretend a foundation can unilaterally edit monetary policy off-chain.
+VeloxDAG launches with Bitcoin's **halving schedule**: 50 VELX for the first 210,000 blocks, then 25, 12.5, and so on, reaching zero after 64 halvings. This gives a hard cap of **21,000,000 VELX** — identical math to Bitcoin — and a predictable, verifiable supply curve from block one. Community governance may later propose parameter changes (e.g., tail emission or fee-market emphasis), but any such change requires social consensus and software adoption—VeloxDAG does not pretend a foundation can unilaterally edit monetary policy off-chain.
 
 ### 8.4 Supply Transparency
 
@@ -330,19 +329,19 @@ Nodes expose `totalSupply` and `blockCount` via RPC. Explorers and analytics too
 
 ### 8.5 Modeling Scenarios
 
-Modelers should stress-test emission under variable block rates: if DAG tips proliferate and retarget raises difficulty, block frequency may differ from ideal 10-second spacing. Use on-chain `blockCount`/time rather than static spreadsheets.
+Modelers should stress-test emission under variable block rates: if the DAG produces parallel blocks, block frequency may differ from ideal 60-second spacing. Use on-chain `blockCount`/time rather than static spreadsheets.
 
 ### 8.6 Inflation and Store-of-Value Narratives
 
-High initial emission favors **distribution** over **scarcity** early. That is intentional: VeloxDAG prioritizes getting coins into miners’ hands before optimizing for hoarding narratives. Long-term scarcity tools (halvings, caps) remain governance decisions with tradeoffs for security budget.
+High initial emission favors **distribution** over **scarcity** early. That is intentional: VeloxDAG prioritizes getting coins into miners’ hands before the halving-driven scarcity curve takes over. The hard cap of 21,000,000 VELX anchors the long-term store-of-value narrative.
 
 ### 8.7 Comparison to Bitcoin’s Halving
 
-Bitcoin’s halving schedule is legendary because it was credible and simple. VeloxDAG may adopt halving later, but only with miner supermajority—launch simplicity comes first.
+Bitcoin’s halving schedule is legendary because it was credible and simple. VeloxDAG adopts the **same schedule** — 210,000-block halving interval, 21M cap — so the monetary policy is immediately legible to anyone who understands Bitcoin.
 
 ### 8.8 Merchant Perspective
 
-Merchants care about expected time-to-confirmation and fee stability. Constant block rewards stabilize miner incentives to include transactions even when fees are low—helpful during bootstrapping. As usage grows, fees should rise naturally, aligning mempool priority with user urgency without subsidizing spam via inflationary tricks.
+Merchants care about expected time-to-confirmation and fee stability. Predictable block rewards stabilize miner incentives to include transactions even when fees are low—helpful during bootstrapping. As usage grows, fees should rise naturally, aligning mempool priority with user urgency without subsidizing spam via inflationary tricks.
 
 ### 8.9 Supply Dashboards
 
@@ -437,7 +436,7 @@ Custodians holding VELX must implement industry-standard key management (HSMs, m
 ### 10.7 Social Engineering / Scam Forks
 
 **Threat:** Malicious wallets or fake repos steal keys.  
-**Mitigation:** Signed releases, checksum publishing, official domain **veloxdag.com**, verify GitHub org **veloxdag**.
+**Mitigation:** Signed releases, checksum publishing, official domain **veloxdag.xyz**, verify GitHub org **samkan113096**.
 
 ### 10.8 Quantum (Long Horizon)
 
@@ -479,19 +478,23 @@ If L2 layers emerge, fraud proof windows and challenge periods must be documente
 | **Chain name** | VeloxDAG |
 | **Ticker** | VELX |
 | **Smallest unit** | 1 satoshi-VELX (10⁻⁸ VELX) |
-| **Coinbase (launch)** | 50 VELX = `5_000000000` base units |
+| **Coinbase (launch)** | 50 VELX = `50_00000000` base units |
+| **Max supply** | 21,000,000 VELX |
+| **Halving interval** | 210,000 blocks |
 | **Hash algorithm** | Double SHA-256 on header prefix ‖ nonce |
 | **Difficulty encoding** | Integer target divisor; higher = harder |
-| **Initial difficulty** | 4 |
-| **Retarget interval** | Every 30 blocks |
+| **Initial difficulty** | 50,000,000 |
+| **Retarget interval** | Every 2,016 blocks |
 | **Max parents** | 2 |
-| **Target block time** | ~10 seconds (design goal) |
+| **Target block time** | ~60 seconds (design goal) |
 | **Max mempool txs** | 5,000 |
+| **Max txs per block** | 100 |
+| **Signature scheme** | Ed25519 (verified on every tx) |
 | **Address prefix** | `velx1` |
 | **Genesis extra data** | Fair launch statement (non-premine) |
 | **JSON-RPC port** | 8545 (default) |
-| **P2P port (planned)** | 37373 |
-| **Reference language** | Go 1.21+ |
+| **P2P port** | 37373 |
+| **Reference language** | Go 1.22+ |
 
 ### 11.1 Block Header Fields
 
@@ -507,7 +510,8 @@ If L2 layers emerge, fraud proof windows and challenge periods must be documente
 
 ### 11.2 Transaction Fields
 
-- `from`, `to`, `amount`, `fee`, `nonce`, `timestamp`, `signature`  
+- `from`, `to`, `amount`, `fee`, `nonce`, `timestamp`, `publicKey`, `signature`  
+- Every transaction is Ed25519-signed over the canonical signing message and verified by nodes.
 - Transaction ID = SHA256(canonical JSON fields)
 
 ### 11.3 State Storage
@@ -553,7 +557,7 @@ VeloxDAG ships three primary binaries:
 ### 12.1 Build
 
 ```bash
-git clone https://github.com/veloxdag/veloxdag.git
+git clone https://github.com/samkan113096/veloxdag.git
 cd veloxdag/chain
 go build -o bin/veloxd ./cmd/veloxd
 go build -o bin/velox-miner ./cmd/velox-miner
@@ -703,7 +707,7 @@ Each found block pays **50 VELX** coinbase to your miner address. Solo mining ke
 **Electricity:** Treat mining as a cost center until you sell or hold VELX.  
 **Security:** Never share wallet files; mine to addresses you control.
 
-Full tutorial: [https://veloxdag.com/tutorial](https://veloxdag.com/tutorial)
+Full tutorial: [https://veloxdag.xyz/tutorial](https://veloxdag.xyz/tutorial)
 
 Early miners face **lower difficulty** and competition—classic fair-launch dynamics. As hash rate arrives, per-miner block frequency drops, but **per-block reward stays 50 VELX** until governance changes it.
 
@@ -736,7 +740,7 @@ Profitability = (expected blocks × 50 VELX × price) − electricity − hardwa
 
 ### 14.11 Community Support
 
-Ask questions in Telegram with logs redacted of private keys. Official tutorial: veloxdag.com/tutorial.
+Ask questions in Telegram with logs redacted of private keys. Official tutorial: veloxdag.xyz/tutorial.
 
 ---
 
@@ -747,7 +751,7 @@ Ask questions in Telegram with logs redacted of private keys. Official tutorial:
 | **Structure** | Linear chain | BlockDAG | DAG narrative / implementation varies | BlockDAG (≤2 parents) |
 | **PoW** | SHA-256 | kHeavyHash | Varies | Double SHA-256 |
 | **Launch fairness** | Fair (historic) | Fair genesis ethos | Category-dependent | **0% premine, no ICO/VC** |
-| **Block time** | ~10 min | Sub-second (network) | Marketing-fast | ~10 sec target |
+| **Block time** | ~10 min | Sub-second (network) | Marketing-fast | ~60 sec target |
 | **Retail mining** | ASIC-dominated | GPU/ASIC era | Varies | **CPU at launch** |
 | **Reward (initial)** | 50 BTC (historic) | Emission per KAS policy | Varies | **50 VELX** |
 | **Maturity** | Maximum Lindy | High throughput proven | Brand + community | Early, open source |
@@ -840,7 +844,7 @@ Off-chain coordination channels:
 
 - Telegram: [https://t.me/VeloxDAG](https://t.me/VeloxDAG)  
 - Twitter: [@VeloxDAG](https://twitter.com/VeloxDAG)  
-- GitHub: [https://github.com/veloxdag](https://github.com/veloxdag)
+- GitHub: [https://github.com/samkan113096/veloxdag](https://github.com/samkan113096/veloxdag)
 
 Governance principles:
 
@@ -926,7 +930,7 @@ Hackathons focused on DAG tooling and fair launch education align with project v
 
 ### 18.11 Volunteer Moderation
 
-Telegram moderators volunteer to reduce scams; they are not financial advisors. Follow official links from veloxdag.com only.
+Telegram moderators volunteer to reduce scams; they are not financial advisors. Follow official links from veloxdag.xyz only.
 
 ### 18.12 Measuring Community Health
 
@@ -938,11 +942,11 @@ Healthy signals: rising unique miner addresses, increasing GitHub contributors, 
 
 VeloxDAG is engineered by builders who ship production software—not slide decks. Core contributors **mine VELX like everyone else**; there is no genesis privilege.
 
-### Joseph Chen — Lead Protocol & Security Engineer
+### Sam Kan — Lead Protocol & Security Engineer
 
-Joseph Chen is an independent Web3 developer with **5+ years** of production experience and **five shipped mainnet projects**. He specializes in Solidity smart contracts, DeFi protocol design, and security-first engineering using Foundry fuzz testing and Slither static analysis.
+Sam Kan is an independent Web3 developer with **5+ years** of production experience and **five shipped mainnet projects**. He specializes in Solidity smart contracts, DeFi protocol design, and security-first engineering using Foundry fuzz testing and Slither static analysis.
 
-At VeloxDAG, Joseph leads **protocol security review**, **RPC hardening**, **mining infrastructure**, and the **WASM smart contract roadmap**. Representative work includes:
+At VeloxDAG, Sam leads **protocol security review**, **RPC hardening**, **mining infrastructure**, and the **WASM smart contract roadmap**. Representative work includes:
 
 - **SecureFlow** — AI-assisted smart contract security scanning  
 - **MeowCoin** — ERC-20 reference implementation  
@@ -950,17 +954,13 @@ At VeloxDAG, Joseph leads **protocol security review**, **RPC hardening**, **min
 - **PawClaim** — Merkle airdrop infrastructure  
 - **CatVesting** — linear vesting contracts  
 
-Joseph believes **fair-launch PoW** is the antidote to VC-captured tokenomics—and ships code accordingly.
-
-- Website: [http://josephchendev.com/](http://josephchendev.com/)  
-- GitHub: [https://github.com/SelfLearnedDev2027](https://github.com/SelfLearnedDev2027)  
-- Email: Josephbbob@proton.me  
+Sam believes **fair-launch PoW** is the antidote to VC-captured tokenomics—and ships code accordingly.
 
 Want to contribute? Email **hello@veloxdag.com** or join Telegram **t.me/VeloxDAG**.
 
 ### 19.1 Engineering Philosophy
 
-Joseph’s portfolio emphasizes **security tooling** and **DeFi mechanics**—skills directly applicable to WASM contract rollout and RPC hardening. Fair launch is not a moral pose alone; it is a constraint that forces sustainable engineering incentives.
+Sam's portfolio emphasizes **security tooling** and **DeFi mechanics**—skills directly applicable to WASM contract rollout and RPC hardening. Fair launch is not a moral pose alone; it is a constraint that forces sustainable engineering incentives.
 
 ### 19.2 Contributors Beyond Core
 
@@ -980,7 +980,7 @@ Core engineers are accountable via public commits and issue trackers. Reputation
 
 ### 19.6 Security Contact
 
-Joseph and maintainers coordinate via security@veloxdag.com for vulnerability reports; public issues should not include exploit details before patch.
+Sam and maintainers coordinate via security@veloxdag.com for vulnerability reports; public issues should not include exploit details before patch.
 
 ### 19.7 Open Roles
 
@@ -1106,12 +1106,12 @@ Start a node. Start a miner. Read the code. The DAG is waiting.
 
 VeloxDAG is a bet that the crypto industry can still launch networks the right way: no hidden supply, no permissioned issuance, no false promises of guaranteed upside. It is a bet that **miners matter**—not as retro nostalgia, but as the decentralization backbone. It is a bet that **BlockDAG** is not just a 2024 keyword, but a durable ledger shape for payments and applications that refuse to wait ten minutes per confirmation.
 
-If you have read this far, you understand the parameters: **50 VELX**, **SHA-256 PoW**, **zero premine**, **CPU-friendly launch**, **two parents**, **ten-second targets**. Everything else is execution—yours and ours together. Welcome to VeloxDAG.
+If you have read this far, you understand the parameters: **50 VELX halving every 210,000 blocks toward a 21M cap**, **SHA-256 PoW**, **zero premine**, **CPU-friendly launch**, **two parents**, **60-second targets**. Everything else is execution—yours and ours together. Welcome to VeloxDAG.
 
 ---
 
 **VeloxDAG · VELX · Fair Launch PoW BlockDAG**
 
-[https://veloxdag.com](https://veloxdag.com) · [hello@veloxdag.com](mailto:hello@veloxdag.com) · [security@veloxdag.com](mailto:security@veloxdag.com)
+[https://veloxdag.xyz](https://veloxdag.xyz) · [hello@veloxdag.com](mailto:hello@veloxdag.com) · [security@veloxdag.com](mailto:security@veloxdag.com)
 
 *Document version 1.0 — May 2026*

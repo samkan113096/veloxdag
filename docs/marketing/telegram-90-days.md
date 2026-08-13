@@ -8,7 +8,7 @@ Welcome to the VeloxDAG launch season. Over the next 90 days we'll walk through 
 Fair launch means genesis has no VELX allocation. The first coins ever created come from block rewards mined by whoever runs the software. No insider bags at block zero.
 
 ## Day 3 (2026-05-28)
-New here? Start at veloxdag.com/tutorial — build veloxd, create a velx1 wallet, run velox-miner. Estimated setup: 10–15 minutes for experienced devs.
+New here? Start at veloxdag.xyz/tutorial — build veloxd, create a velx1 wallet, run velox-miner. Estimated setup: 10–15 minutes for experienced devs.
 
 ## Day 4 (2026-05-29)
 BlockDAG primer: VeloxDAG blocks reference up to two parents, allowing parallel tips and higher throughput than a single linear chain — while staying Proof-of-Work.
@@ -53,7 +53,7 @@ Telegram is the fastest support lane for miners. For partnerships and press, ema
 Solo vs pool: at launch we encourage solo mining to strengthen the P2P mesh. When pools appear, verify fee structure and payout transparency.
 
 ## Day 18 (2026-06-12)
-Read the litepaper on veloxdag.com for DAG structure, emission, and security model — bookmarks beat rumors.
+Read the litepaper on veloxdag.xyz for DAG structure, emission, and security model — bookmarks beat rumors.
 
 ## Day 19 (2026-06-13)
 Mainnet countdown (~70 days): document your velx1 address, backup wallets offline, and test submitblock on a synced node.
@@ -98,7 +98,7 @@ Mainnet countdown (~60 days): ensure disk space for datadir, stable uplink, and 
 Want VELX? Mine it or buy from someone who mined it. There is no airdrop to influencers at genesis.
 
 ## Day 33 (2026-06-27)
-Team transparency: Joseph Chen leads protocol engineering — RPC hardening, mining infra, WASM roadmap — and mines VELX like any contributor. See veloxdag.com/team.
+Team transparency: Sam Kan leads protocol engineering — RPC hardening, mining infra, WASM roadmap — and mines VELX like any contributor. See veloxdag.xyz/team.
 
 ## Day 34 (2026-06-28)
 Narrative stack: BlockDAG popularized parallel blocks; Kaspa proved fast PoW; VeloxDAG combines speed with zero premine.
@@ -143,7 +143,7 @@ Security model: attacks require hashrate, not a genesis key. Fair launch removes
 Laptop mining OK for tests; sustained hash wants cooling and stable power — desktop or VPS recommended.
 
 ## Day 48 (2026-07-12)
-Blog updates at veloxdag.com/blog — mining guides, KAS comparisons, pool notes.
+Blog updates at veloxdag.xyz/blog — mining guides, KAS comparisons, pool notes.
 
 ## Day 49 (2026-07-13)
 Cult networks are built by people who fix sync errors at 2am — thank you in advance.
@@ -257,7 +257,7 @@ Watch gettips as parallel tips grow — that's the BlockDAG story in live RPC.
 Welcome KAS community members — respect the hash, compare architecture honestly.
 
 ## Day 86 (2026-08-19)
-Scam alert week 1: fake support bots spike after launch. Official links only on veloxdag.com.
+Scam alert week 1: fake support bots spike after launch. Official links only on veloxdag.xyz.
 
 ## Day 87 (2026-08-20)
 Emission math is public: 50 VELX × blocks — no hidden mint curve.

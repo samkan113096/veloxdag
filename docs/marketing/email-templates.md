@@ -1,6 +1,6 @@
 # VeloxDAG Email Templates
 
-Brand: **VeloxDAG** · Ticker: **VELX** · [veloxdag.com](https://veloxdag.com) · hello@veloxdag.com
+Brand: **VeloxDAG** · Ticker: **VELX** · [veloxdag.xyz](https://veloxdag.xyz) · hello@veloxdag.com
 
 ---
 
@@ -24,8 +24,8 @@ You’re now on the list for **fair-launch mining guides**, mainnet milestones, 
 - Mainnet and network health announcements  
 
 **Get started**
-- Mining tutorial: https://veloxdag.com/tutorial  
-- About & tokenomics: https://veloxdag.com/about  
+- Mining tutorial: https://veloxdag.xyz/tutorial  
+- About & tokenomics: https://veloxdag.xyz/about  
 - Community: https://t.me/VeloxDAG · https://twitter.com/VeloxDAG  
 
 Questions? Reply to this email or write hello@veloxdag.com.
@@ -33,7 +33,7 @@ Questions? Reply to this email or write hello@veloxdag.com.
 Welcome to the hash,
 
 **The VeloxDAG Team**  
-https://veloxdag.com
+https://veloxdag.xyz
 
 ---
 
@@ -56,10 +56,10 @@ VELX is emitted **only through Proof-of-Work block rewards** — **50 VELX per b
 2. Create a wallet (`velox-wallet new`) and back up your key offline  
 3. Run `veloxd`, sync, then `velox-miner -miner YOUR_VELX_ADDRESS`  
 
-Full guide: https://veloxdag.com/tutorial  
+Full guide: https://veloxdag.xyz/tutorial  
 
 **Important**
-- Verify downloads from official sources linked at veloxdag.com  
+- Verify downloads from official sources linked at veloxdag.xyz  
 - We will never ask for your private key or wallet file  
 
 Join launch coordination: https://t.me/VeloxDAG  
@@ -67,7 +67,7 @@ Join launch coordination: https://t.me/VeloxDAG
 Fair launch is consensus — not a slogan.
 
 **The VeloxDAG Team**  
-hello@veloxdag.com · https://veloxdag.com
+hello@veloxdag.com · https://veloxdag.xyz
 
 ---
 
@@ -90,7 +90,7 @@ You recently viewed our mining resources — here’s a concise **follow-up chec
 - [ ] Miner started with correct `-miner velx1...` address  
 - [ ] Threads tuned for stable thermals and power  
 
-Tutorial: https://veloxdag.com/tutorial  
+Tutorial: https://veloxdag.xyz/tutorial  
 
 **Tips**
 - Run the node 24/7 on a stable connection before maximizing threads  
@@ -127,7 +127,7 @@ Fair launch puts **you** in custody of your earnings. Please follow these **secu
 - If remote RPC is required, firewall by IP and use strong authentication  
 
 **Operational**
-- Download binaries only from official links on veloxdag.com / verified GitHub releases  
+- Download binaries only from official links on veloxdag.xyz / verified GitHub releases  
 - Ignore DMs offering “support,” airdrops, or doubling schemes — **scams spike at launch**  
 
 Report suspicious impersonation to hello@veloxdag.com.
@@ -135,7 +135,7 @@ Report suspicious impersonation to hello@veloxdag.com.
 Stay safe,
 
 **The VeloxDAG Team**  
-https://veloxdag.com
+https://veloxdag.xyz
 
 ---
 
@@ -165,7 +165,7 @@ Regards,
 
 **{{sender_name}}**  
 VeloxDAG Partnerships  
-hello@veloxdag.com · https://veloxdag.com
+hello@veloxdag.com · https://veloxdag.xyz
 
 ---
 
@@ -192,13 +192,13 @@ VeloxDAG is a fair-launch **Proof-of-Work BlockDAG** blockchain. **Zero premine,
 | Launch model | 100% PoW fair launch |
 | Premine | 0% |
 | Block reward | 50 VELX (launch) |
-| Website | https://veloxdag.com |
+| Website | https://veloxdag.xyz |
 | Contact | hello@veloxdag.com |
 
 **Assets & links**
-- Website & blog: https://veloxdag.com · https://veloxdag.com/blog  
-- Mining tutorial: https://veloxdag.com/tutorial  
-- Team: https://veloxdag.com/team  
+- Website & blog: https://veloxdag.xyz · https://veloxdag.xyz/blog  
+- Mining tutorial: https://veloxdag.xyz/tutorial  
+- Team: https://veloxdag.xyz/team  
 - Social: https://twitter.com/VeloxDAG · https://t.me/VeloxDAG  
 
 **Interview requests**  
@@ -226,7 +226,7 @@ Here’s your **VeloxDAG weekly digest** for **{{week_of}}**.
 ### Network & mining
 - **Chain height / status:** {{chain_status_summary}}  
 - **Mining tip of the week:** {{mining_tip}}  
-- **Doc highlight:** https://veloxdag.com/tutorial  
+- **Doc highlight:** https://veloxdag.xyz/tutorial  
 
 ### Fair launch reminder
 VELX supply grows **only** through block rewards — **no premine, no ICO**. If it wasn’t mined or bought from a miner, it wasn’t part of genesis.
@@ -236,7 +236,7 @@ VELX supply grows **only** through block rewards — **no premine, no ICO**. If 
 - **Twitter:** https://twitter.com/VeloxDAG — {{social_highlight}}  
 
 ### Read of the week
-{{blog_title}} — https://veloxdag.com/blog/{{blog_slug}}
+{{blog_title}} — https://veloxdag.xyz/blog/{{blog_slug}}
 
 ### Coming up
 {{upcoming_events}}
@@ -275,7 +275,7 @@ Help grow a **fair-launch, PoW-first** ecosystem: educate on BlockDAG basics, gu
 
 **What we ask**
 - Disclose ambassador status when posting  
-- Use only official links from veloxdag.com  
+- Use only official links from veloxdag.xyz  
 - No paid shilling, fake giveaways, or impersonation of team accounts  
 
 Interested? Reply with your region, languages, and how you’d like to contribute.
@@ -283,7 +283,7 @@ Interested? Reply with your region, languages, and how you’d like to contribut
 Thank you for building with us,
 
 **VeloxDAG Community**  
-hello@veloxdag.com · https://veloxdag.com
+hello@veloxdag.com · https://veloxdag.xyz
 
 ---
 
@@ -303,7 +303,7 @@ We haven’t seen you on recent community threads — if you’re still mining *
 2. Re-verify your `-miner` address on `velox-miner`  
 3. Refresh to the latest release from official sources  
 
-Tutorial refresh: https://veloxdag.com/tutorial  
+Tutorial refresh: https://veloxdag.xyz/tutorial  
 
 If you’ve stopped mining, we’d love a one-line reply on why — it helps us improve docs.
 
