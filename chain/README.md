@@ -106,7 +106,7 @@ curl -s http://127.0.0.1:8545 -H "Content-Type: application/json" \
 | Service | Default |
 |---------|---------|
 | RPC/HTTP | 8545 |
-| P2P (future) | 37373 |
+| P2P | 37373 |
 
 ## Project Links
 

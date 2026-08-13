@@ -418,10 +418,10 @@ Custodians holding VELX must implement industry-standard key management (HSMs, m
 **Threat:** Attacker broadcasts conflicting transactions to different parts of the network.  
 **Mitigation:** Exchanges wait for sufficient work depth; nodes enforce nonce ordering and balance checks; mempools evict invalid txs.
 
-### 10.4 Sybil on P2P (Future)
+### 10.4 Sybil on P2P
 
 **Threat:** Fake peers eclipse honest nodes.  
-**Mitigation:** Peer diversity, anchor nodes, encrypted transport, stake-agnostic peer scoring—planned as P2P layer matures (port **37373** reserved).
+**Mitigation:** The P2P gossip layer (port **37373**) ships with the node and propagates blocks/transactions between peers. Ongoing hardening—peer diversity, anchor nodes, encrypted transport, and stake-agnostic peer scoring—reduces eclipse risk as the network grows.
 
 ### 10.5 RPC Abuse
 
@@ -575,36 +575,41 @@ go build -o bin/velox-wallet ./cmd/velox-wallet
 - `GET /health` → `{"status":"ok","chain":"VeloxDAG"}`
 - `GET /api/info` → chain metadata (ticker, algorithm, premine 0%, block reward, tips, difficulty)
 
-### 12.4 Future Components
+### 12.4 Included Components
 
-- P2P gossip for block propagation  
+- P2P gossip layer for block propagation (port 37373)  
+- JSON-RPC API, health/stats endpoints, and CORS for browser wallets  
+- Ed25519-signed transactions with server-side signature verification
+
+### 12.5 Future Components
+
 - Archival indexer / explorer APIs  
 - WASM contract runtime (see roadmap)  
 - Mobile light clients
 
 The stack is MIT-licensed open source; contributions via GitHub pull requests are welcome.
 
-### 12.5 Deployment Topologies
+### 12.6 Deployment Topologies
 
 **Solo home miner:** laptop runs `veloxd` + `velox-miner`. **Serious miner:** VPS runs node 24/7, miner on dedicated hardware. **Exchange:** clustered nodes behind load balancers with cold storage separation. Each topology shares the same consensus rules—only operations differ.
 
-### 12.6 Observability
+### 12.7 Observability
 
 Log block acceptance, tip changes, difficulty retargets, and RPC errors. Prometheus exporters may be community-built; core binaries focus on correctness first.
 
-### 12.7 Configuration Surface
+### 12.8 Configuration Surface
 
 `-datadir` controls state location; `-port` controls RPC bind. Operators should use process supervisors (systemd, docker restart policies) for uptime.
 
-### 12.8 Docker and Packaging
+### 12.9 Docker and Packaging
 
 Community Docker images may simplify deployment; verify image digests against signed releases. Container orchestration should not expose RPC ports publicly without authentication.
 
-### 12.9 Upgrade Discipline
+### 12.10 Upgrade Discipline
 
 Read release notes before upgrading miners during active mining—consensus rule changes can orphan work if versions mismatch. Pin versions in production.
 
-### 12.10 Testing
+### 12.11 Testing
 
 Run local devnets with low difficulty to validate wallet flows before mainnet mining. CI in the repository runs unit tests on pow verification and block acceptance.
 
@@ -652,41 +657,63 @@ Broadcasts transaction to mempool.
 
 **Result:** array of tip block hashes
 
-### 13.7 Example
+### 13.7 `getnonce`
+
+**Params:** `{ "address": "velx1..." }`
+
+**Result:** `{ "nonce": 0 }` — the next transaction nonce a sender must use.
+
+### 13.8 `getblock`
+
+**Params:** `{ "hash": "..." }` (or `height`)
+
+**Result:** full block object (header + transactions).
+
+### 13.9 `addpeer`
+
+**Params:** `{ "addr": "1.2.3.4:37373" }`
+
+**Result:** `{ "status": "connecting", "addr" }` — connects the node to a P2P peer.
+
+### 13.10 `getpeerinfo`
+
+**Result:** `{ "count", "peers": [...] }` — connected P2P peers.
+
+### 13.11 Example
 
 ```bash
 curl -s http://127.0.0.1:8545 -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"getchaininfo","params":{},"id":1}'
 ```
 
-### 13.8 Error Codes
+### 13.12 Error Codes
 
 Standard JSON-RPC errors apply (`-32700` parse, `-32601` method not found, `-32602` invalid params, `-32000` server errors).
 
-### 13.9 Integration Patterns
+### 13.13 Integration Patterns
 
 Miners poll `getblocktemplate` in a loop, brute-force nonces locally, then `submitblock`. Wallets poll `getbalance`. Exchanges batch `sendrawtransaction` with nonce management off-chain in their accounting DB—but must respect on-chain nonces.
 
-### 13.10 Rate Limits and Auth
+### 13.14 Rate Limits and Auth
 
 Public RPC gateways should implement per-IP rate limits. Authenticated endpoints may be offered by infrastructure providers; core reference node remains simple.
 
-### 13.11 Future Methods (Planned)
+### 13.15 Future Methods (Planned)
 
-Potential extensions: `getblock`, `gettransaction`, `estimatesmartfee`, peer info RPCs—governed by semver and miner adoption.
+Potential extensions: `gettransaction`, `estimatesmartfee`, and richer address-history RPCs—governed by semver and miner adoption.
 
-### 13.12 Example: Balance Query
+### 13.16 Example: Balance Query
 
 ```bash
 curl -s http://127.0.0.1:8545 -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"getbalance","params":{"address":"velx1..."},"id":1}'
 ```
 
-### 13.13 Error Handling for Integrators
+### 13.17 Error Handling for Integrators
 
 Treat `-32000` errors as potentially retryable for transient mempool issues; treat invalid PoW as permanent until template refresh. Always fetch a fresh `getblocktemplate` after stale work.
 
-### 13.14 JSON Schema Stability
+### 13.18 JSON Schema Stability
 
 Field names in blocks and transactions should remain backward compatible within major versions; breaking changes require version bumps and miner coordination.
 
@@ -1050,7 +1077,7 @@ Participants must comply with applicable sanctions and export controls when oper
 
 ### Phase 2 — Network Hardening (2026 Q3)
 
-- P2P gossip layer (port 37373)  
+- ~~P2P gossip layer (port 37373)~~ ✅ shipped  
 - Improved DAG ordering / confirmation documentation in clients  
 - Explorer and pool ecosystem support  
 - Security audits on consensus-critical modules  

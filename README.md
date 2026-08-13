@@ -87,8 +87,12 @@ Run a node, then POST to `http://127.0.0.1:8545`:
 | `getblocktemplate` | Get mining template (`{miner: "velx1..."}`) |
 | `submitblock` | Submit mined block |
 | `getbalance` | Query address balance (`{address: "velx1..."}`) |
-| `sendrawtransaction` | Broadcast transfer |
+| `getnonce` | Next transaction nonce for an address |
+| `sendrawtransaction` | Broadcast signed transfer |
 | `getchaininfo` | Chain stats (supply, blocks, halving) |
+| `gettips` | Current DAG tips |
+| `getblock` | Fetch a block by hash |
+| `addpeer` / `getpeerinfo` | Manage & list P2P peers |
 
 REST: `GET /api/stats` — JSON with supply, mined %, block height, difficulty.
 
@@ -112,7 +116,7 @@ cd website && npm install && npm run dev
 ```
 
 Live at **https://veloxdag.xyz** — includes:
-- Live network stats (updates every 5s via Netlify proxy → VPS node)
+- Live network stats (updates every 10s via Netlify proxy → VPS node)
 - Browser web wallet (create seed phrase, send/receive VELX, check balance)
 - 20 blog posts, litepaper, mining tutorial, team
 
